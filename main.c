@@ -145,7 +145,6 @@ int main(int argc, char const *argv[])
 	/* If the file doesn't exist, then create the file. */
 	if(rulesIn == NULL) 
 	{
-		fclose (rulesIn);
 		printf ("Regl filen er ikke ekstisterende. Den skabes.\n");
 		FILE * tmp = fopen ("rules_test.txt", "w");
 		fclose (tmp);
@@ -155,7 +154,6 @@ int main(int argc, char const *argv[])
 	/* If the file doesn't exist, then create the file. */
 	if(devicesIn == NULL) 
 	{
-		fclose (devicesIn);
 		printf ("Enheds filen er ikke ekstisterende. Den skabes.\n");
 		FILE * tmp = fopen ("devices_test.txt", "w");
 		fclose (tmp);

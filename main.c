@@ -87,16 +87,17 @@ void print_rules (rule *activeRules, int numberOfRules)
 
     for (i = 0; i < numberOfRules; i++)
     {
-        printf("%s\n", activeRules[i].name);
+        printf("Name:\t%s\n", activeRules[i].name);
 
-        printf("%d\n", activeRules[i].active);
-        
+        printf("Active:\t%d\n", activeRules[i].active);
+
+        printf("Depends on:\n");        
         for (j = 0; j < DEVICES_PR_RULE; j++)
         {
             printf("%d ", activeRules[i].dependencies[j]);
         }
         
-        printf("\n");
+        printf("\nAffects:\n");
 
         for (j = 0; j < DEVICES_PR_RULE; j++)
         {
@@ -176,8 +177,10 @@ void print_devices (device *activeDevices, int numberOfDevices)
 int add_device (device *activeDevices, int numberOfDevices) {
     printf ("Navn paa enhed:\n>");
     scanf ("%s", activeDevices[numberOfDevices].name);
-    printf ("Stadie [0/1]\n>");
+    printf ("Stadie [0/1] (Defaults to 1 if invalid)\n>");
     scanf ("%d", &activeDevices[numberOfDevices].state);
+    if(activeDevices[numberOfDevices].state != 0 || activeDevices[numberOfDevices].state != 1)
+        activeDevices[numberOfDevices].state = 1;
 
     activeDevices[numberOfDevices].id = numberOfDevices + 1;
 
@@ -219,6 +222,9 @@ int main(int argc, char const *argv[])
     int numberOfDevices = load_devices (devicesIn, activeDevices);
     fclose (devicesIn);
 
+    /* Print loading info */
+    printf ("Loaded %d rules, and %d devices.\n---------------------\n", numberOfRules, numberOfDevices);
+
     /* Print menu */
     int option; 
     do {
@@ -238,6 +244,7 @@ int main(int argc, char const *argv[])
             case 2: print_devices (activeDevices, numberOfDevices); break;
             case 3: numberOfRules = add_rule (activeRules, numberOfRules); break;
             case 4: numberOfDevices = add_device (activeDevices, numberOfDevices); break;
+            default: printf("Invalid option try again.\n"); break;
         }
         printf("---------------------\n");
     } while (option != 0);

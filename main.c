@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h> 
 
 #define MAX_RULES       100
 #define MAX_DEVICES     100
@@ -262,7 +263,7 @@ int add_device (device *activeDevices, int numberOfDevices)
     scanf ("%d", &activeDevices[numberOfDevices].state); 
     if(activeDevices[numberOfDevices].state != 0 || activeDevices[numberOfDevices].state != 1)*/
     
-    activeDevices[numberOfDevices].state = 1;
+    activeDevices[numberOfDevices].state = 0;
 
     if (numberOfDevices > 0) 
         activeDevices[numberOfDevices].id = activeDevices[numberOfDevices - 1].id + 1;
@@ -337,6 +338,28 @@ void save_files (rule *activeRules, int numberOfRules, device *activeDevices, in
     fclose (devicesOut); 
 }
 
+void automation_loop (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
+{
+    if((int) time(NULL) % 2 == 0)
+    {
+        printf("Tid er lige!!\n");
+    } else {
+        printf("Tid er ulige\n");
+    }
+}
+
+void automation_init (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
+{
+    printf("Saving all rules [%d] and devices [%d]\n", numberOfRules, numberOfDevices);
+    save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
+    time_t time_start;
+    time(&time_start);
+    printf("Automation started at: %s\n", ctime (&time_start));
+
+    /* automation is checked in a loop: */
+    automation_loop (activeRules, numberOfRules, activeDevices, numberOfDevices);
+}
+
 int main(int argc, char const *argv[])
 {
     FILE * rulesIn = fopen ("rules_test.txt", "r");
@@ -375,42 +398,48 @@ int main(int argc, char const *argv[])
     /* Print loading info */
     printf ("Loaded %d rules, and %d devices.\n---------------------\n", numberOfRules, numberOfDevices);
 
-    /* Print menu */
-    int option; 
-    do {
-        printf("Please choose an option.\n"
-               "  '-1' Quit\n"
-               "  '1' Print list of rules [%d]\n"
-               "  '2' Print list of devices [%d]\n"
-               "  '3' Add rule\n"
-               "  '4' Add device\n"
-               "  '5' Edit rule\n"
-               "  '6' Edit device\n"
-               "  '7' Delete rule\n"
-               "  '8' Delete device\n"
-               "  '9' Start home automation\n"
-               ">", numberOfRules, numberOfDevices);
-        scanf("%d", &option);
-        printf("---------------------\n");
-        switch (option)
-        {
-            case -1: printf ("Bye\n"); break;
-            case 1: for (i = 0; i < numberOfRules; i++) {print_single_rule(activeRules, i);} break;
-            case 2: for (i = 0; i < numberOfDevices; i++) {print_single_device(activeDevices, i);} break;
-            case 3: numberOfRules = add_rule (activeRules, numberOfRules); break;
-            case 4: numberOfDevices = add_device (activeDevices, numberOfDevices); break;
-            case 5: edit_rule (activeRules, numberOfRules); break;
-            case 6:  break;
-            case 7: numberOfRules = delete_rule (activeRules, numberOfRules); break;
-            case 8: numberOfDevices = delete_device (activeDevices, numberOfDevices); break;
-            case 9:  break;
-            default: printf("Invalid option try again.\n"); break;
-        }
-        printf("---------------------\n");
-    } while (option != -1);
+    /* Allow to run i daemon mode, otherwise print menu */
+    if(argc > 1 && strcmp(argv[0],"-d"))
+    {
+        automation_init (activeRules, numberOfRules, activeDevices, numberOfDevices);
+    } else {
+        /* Print menu */
+        int option; 
+        do {
+            printf("Please choose an option.\n"
+                   "  '-1' Quit\n"
+                   "  '1' Print list of rules [%d]\n"
+                   "  '2' Print list of devices [%d]\n"
+                   "  '3' Add rule\n"
+                   "  '4' Add device\n"
+                   "  '5' Edit rule\n"
+                   "  '6' Edit device\n"
+                   "  '7' Delete rule\n"
+                   "  '8' Delete device\n"
+                   "  '9' Start home automation\n"
+                   ">", numberOfRules, numberOfDevices);
+            scanf("%d", (int *) &option);
+            printf("---------------------\n");
+            switch (option)
+            {
+                case -1: printf ("Bye\n"); break;
+                case 1: for (i = 0; i < numberOfRules; i++) {print_single_rule(activeRules, i);} break;
+                case 2: for (i = 0; i < numberOfDevices; i++) {print_single_device(activeDevices, i);} break;
+                case 3: numberOfRules = add_rule (activeRules, numberOfRules); break;
+                case 4: numberOfDevices = add_device (activeDevices, numberOfDevices); break;
+                case 5: edit_rule (activeRules, numberOfRules); break;
+                case 6:  break;
+                case 7: numberOfRules = delete_rule (activeRules, numberOfRules); break;
+                case 8: numberOfDevices = delete_device (activeDevices, numberOfDevices); break;
+                case 9: automation_init (activeRules, numberOfRules, activeDevices, numberOfDevices); break;
+                default: printf("Invalid option try again.\n"); break;
+            }
+            printf("---------------------\n");
+        } while (option != -1);
+
+    }
 
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
-
 
     return 0;
 }

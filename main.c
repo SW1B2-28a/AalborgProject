@@ -1,6 +1,6 @@
 /*
  * B2-28a
- * Version 0.1 - Initial idea
+ * Version 0.2 - Initial idea (Indev) 
  * 24-11-2013
  *
  * Outline for fileformats located in the end of this file.
@@ -242,57 +242,77 @@ void write_devices (FILE *devices, device *activeDevices, int numberOfDevices)
     }
 }
 
-void print_devices (device *activeDevices, int numberOfDevices) 
+void print_single_device (device *activeDevices, int deviceNumber) 
 {
-    int i;
+    printf("Name:\t%s\n", activeDevices[deviceNumber].name);
 
-    for (i = 0; i < numberOfDevices; i++)
-    {
-        printf("Name:\t%s\n", activeDevices[i].name);
-        
-        printf("Id:\t%d\n", activeDevices[i].id);
-        
-        printf("State:\t%d\n\n", activeDevices[i].state);
+    printf("Id:\t%d\n", activeDevices[deviceNumber].id);
 
-    }
+    printf("State:\t%d\n\n", activeDevices[deviceNumber].state);
 }
+
+
 
 int add_device (device *activeDevices, int numberOfDevices) 
 {
-    printf ("Enter a name for the device:\n>");
+    printf ("Enter a name for the device (no spaces):\n>");
     scanf ("%s", activeDevices[numberOfDevices].name);
+    /* 
     printf ("State [0/1] (Defaults to 1 if invalid)\n>");
-    scanf ("%d", &activeDevices[numberOfDevices].state);
-    if(activeDevices[numberOfDevices].state != 0 || activeDevices[numberOfDevices].state != 1)
-        activeDevices[numberOfDevices].state = 1;
+    scanf ("%d", &activeDevices[numberOfDevices].state); 
+    if(activeDevices[numberOfDevices].state != 0 || activeDevices[numberOfDevices].state != 1)*/
+    
+    activeDevices[numberOfDevices].state = 1;
 
     if (numberOfDevices > 0) 
         activeDevices[numberOfDevices].id = activeDevices[numberOfDevices - 1].id + 1;
     else
-        activeDevices[numberOfDevices].id = numberOfDevices + 1;
+        activeDevices[numberOfDevices].id = 0;
 
     return numberOfDevices + 1;
 }
 
 int delete_device (device *activeDevices, int numberOfDevices)
 {
-    int deviceNumber;
+    /* To delete by id, the id corrisponding to the locations in the array must be found */
+    int idInArray[numberOfDevices - 1], i;
+    for (i = 0; i < numberOfDevices; i++)
+    {
+        idInArray[i] = activeDevices[i].id;
+        printf("%d\n", i);
+    }
+
+    int deviceNumber, option = -2;
     do {
-        printf("Enter the id of the device which is to be delted: (-1 to quit)\n>");
-        scanf("%d", &deviceNumber);
-        if (deviceNumber > numberOfDevices - 1 || deviceNumber < - 1)
+        printf("Enter the id of the device which is to be delted: (-1 to quit)\n");
+        for (i = 0; i < numberOfDevices; i++)
         {
-            printf("Rule not found\n");
-        } 
-            else if ( deviceNumber == - 1) 
+            printf("%d: %s\n", activeDevices[i].id, activeDevices[i].name);
+        }
+        printf("> ");
+        scanf("%d", &deviceNumber);
+
+        if (option == -1)
         {
             return numberOfDevices;
         }
 
-    } while (deviceNumber > numberOfDevices - 1 || deviceNumber < - 1);
+        for (i = 0; i < numberOfDevices; i++)
+        {
+            if (idInArray[i] == deviceNumber)
+            {
+                option = i;
+            }
+        }
 
-    int i;
-    for ( i = deviceNumber; i < numberOfDevices - 1; i++ )
+        if (option == -2)
+        {
+            printf("Rule not found, try again\n");
+        } 
+
+    } while (option < 0);
+
+    for ( i = option; i < numberOfDevices - 1; i++ )
     {
         strcpy (activeDevices[i].name, activeDevices[i].name);
         activeDevices[i].state = activeDevices[i + 1].state;
@@ -300,6 +320,21 @@ int delete_device (device *activeDevices, int numberOfDevices)
     }
 
     return numberOfDevices - 1;
+}
+
+void save_files (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
+{
+    /* Open file in write mode and write all rules */
+    FILE * rulesOut = fopen ("rules_test.txt", "w");
+    write_rules (rulesOut, activeRules, numberOfRules);
+    printf ("Rules written (%d)\n", numberOfRules);
+    fclose (rulesOut);
+
+    /* Open file in write mode and write all devices */
+    FILE * devicesOut = fopen ("devices_test.txt", "w");
+    write_devices (devicesOut, activeDevices, numberOfDevices);
+    printf ("Devices written (%d)\n", numberOfDevices);
+    fclose (devicesOut); 
 }
 
 int main(int argc, char const *argv[])
@@ -313,7 +348,6 @@ int main(int argc, char const *argv[])
         printf ("Regl filen er ikke ekstisterende. Den skabes.\n");
         FILE * tmp = fopen ("rules_test.txt", "w");
         fclose (tmp);
-        exit (1);
     }
 
     /* If the file doesn't exist, then create the file. */
@@ -322,7 +356,6 @@ int main(int argc, char const *argv[])
         printf ("Enheds filen er ikke ekstisterende. Den skabes.\n");
         FILE * tmp = fopen ("devices_test.txt", "w");
         fclose (tmp);
-        exit (1);
     }
 
     int i;
@@ -346,7 +379,7 @@ int main(int argc, char const *argv[])
     int option; 
     do {
         printf("Please choose an option.\n"
-               "  '0' Quit\n"
+               "  '-1' Quit\n"
                "  '1' Print list of rules [%d]\n"
                "  '2' Print list of devices [%d]\n"
                "  '3' Add rule\n"
@@ -361,9 +394,9 @@ int main(int argc, char const *argv[])
         printf("---------------------\n");
         switch (option)
         {
-            case 0: printf ("Bye\n"); break;
+            case -1: printf ("Bye\n"); break;
             case 1: for (i = 0; i < numberOfRules; i++) {print_single_rule(activeRules, i);} break;
-            case 2: print_devices (activeDevices, numberOfDevices); break;
+            case 2: for (i = 0; i < numberOfDevices; i++) {print_single_device(activeDevices, i);} break;
             case 3: numberOfRules = add_rule (activeRules, numberOfRules); break;
             case 4: numberOfDevices = add_device (activeDevices, numberOfDevices); break;
             case 5: edit_rule (activeRules, numberOfRules); break;
@@ -374,20 +407,10 @@ int main(int argc, char const *argv[])
             default: printf("Invalid option try again.\n"); break;
         }
         printf("---------------------\n");
-    } while (option != 0);
+    } while (option != -1);
 
+    save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
 
-    /* Open file in write mode and write all rules */
-    FILE * rulesOut = fopen ("rules_test.txt", "w");
-    write_rules (rulesOut, activeRules, numberOfRules);
-    printf ("Rules written (%d)\n", numberOfRules);
-    fclose (rulesOut);
-
-    /* Open file in write mode and write all devices */
-    FILE * devicesOut = fopen ("devices_test.txt", "w");
-    write_devices (devicesOut, activeDevices, numberOfDevices);
-    printf ("Devices written (%d)\n", numberOfDevices);
-    fclose (devicesOut); 
 
     return 0;
 }

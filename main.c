@@ -220,7 +220,7 @@ int load_devices (FILE *devices, device *activeDevices)
         
         fscanf(devices, "%d ", &activeDevices[n].id);
         
-        fscanf(devices, "%d ", &activeDevices[n].state);
+        activeDevices[n].state = 0;
 
         n++;
     }
@@ -237,8 +237,6 @@ void write_devices (FILE *devices, device *activeDevices, int numberOfDevices)
         fprintf(devices, "%s\n", activeDevices[i].name);
         
         fprintf(devices, "%d\n", activeDevices[i].id);
-        
-        fprintf(devices, "%d\n\n", activeDevices[i].state);
 
     }
 }
@@ -252,25 +250,32 @@ void print_single_device (device *activeDevices, int deviceNumber)
     printf("State:\t%d\n\n", activeDevices[deviceNumber].state);
 }
 
-
-
 int add_device (device *activeDevices, int numberOfDevices) 
 {
+    /* Must be unique */
+    int i;
+    char tmp[50];
     printf ("Enter a name for the device (no spaces):\n>");
-    scanf ("%s", activeDevices[numberOfDevices].name);
-    /* 
-    printf ("State [0/1] (Defaults to 1 if invalid)\n>");
-    scanf ("%d", &activeDevices[numberOfDevices].state); 
-    if(activeDevices[numberOfDevices].state != 0 || activeDevices[numberOfDevices].state != 1)*/
+    scanf ("%s", tmp);
+    for (i = 0; i < numberOfDevices; i++)
+    {
+        if (strcmp (tmp, activeDevices[i].name) == 0)
+        {
+            printf("Device's name isn't unique. Failed to create device.\n");
+            return numberOfDevices;
+        }
+    }
+    
+    strcpy (activeDevices[i].name, tmp);
     
     activeDevices[numberOfDevices].state = 0;
 
-    if (numberOfDevices > 0) 
+    if (numberOfDevices > 0)
         activeDevices[numberOfDevices].id = activeDevices[numberOfDevices - 1].id + 1;
     else
         activeDevices[numberOfDevices].id = 0;
 
-    return numberOfDevices + 1;
+    return numberOfDevices + 1; 
 }
 
 int delete_device (device *activeDevices, int numberOfDevices)
@@ -338,14 +343,92 @@ void save_files (rule *activeRules, int numberOfRules, device *activeDevices, in
     fclose (devicesOut); 
 }
 
+int get_current_time_in_minutes (void)
+{
+    /* This function would in the real program get the current time from the OS, 
+     * but in the simulation this is done via a file written by the simulatior
+     */
+    
+    int min;
+    FILE * fcurrentTime = fopen ("time.txt", "r");
+
+    /* Check if the file exists */
+    if(fcurrentTime == NULL) 
+    {
+        printf ("Time file doesn't exist. Open the simulator and try again\n");
+        exit(1);      
+    }
+
+    fscanf(fcurrentTime, "%d", &min);
+    fclose(fcurrentTime);
+    return min;
+}
+
+void load_current_state (device *activeDevices, int numberOfDevices)
+{
+    int i;
+    for (i = 0; i < numberOfDevices; i++)
+    {
+        FILE * tmp = fopen(activeDevices[i].name, "r");
+
+        /* Exit on failure */
+        if (tmp == NULL)
+        {
+            printf("Loading file %s failed. Quitting.\n", activeDevices[i].name);
+            exit(1);
+        }
+        fscanf(tmp, "%d", &activeDevices[i].state);
+        fclose (tmp);
+    }
+}
+
+void check_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
+{
+
+}
+
+void trigger_rule (rule *activeRules, int i)
+{
+
+}
+
 void automation_loop (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
+    /* Checks if the time (in secounds) is equal or odd, if equal it performs checks actions
+     * This is done to avoid having both programs (the simulatior and this) open a given file at the same time.
+     * The current time. 
+     */
+
+    /* Get the time in order to compare it later */
+    int i,
+        min1 = get_current_time_in_minutes(),
+        min2;
+
+
+    /* loop start */
+
+    /* Read current io from files */
+
     if((int) time(NULL) % 2 == 0)
     {
         printf("Tid er lige!!\n");
+
+        /* Checks if any timerBased rules should trigger */
+
+        min2 = get_current_time_in_minutes();
+        for (i = 0; i < numberOfRules; i++)
+        {
+            if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min <= min2))
+                trigger_rule(activeRules, i); 
+        }
+        
     } else {
         printf("Tid er ulige\n");
     }
+
+    /* loop end */
+
+    /* TBI: WRITE RULES CONSEQUENCES TO FILES */
 }
 
 void automation_init (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
@@ -355,6 +438,10 @@ void automation_init (rule *activeRules, int numberOfRules, device *activeDevice
     time_t time_start;
     time(&time_start);
     printf("Automation started at: %s\n", ctime (&time_start));
+
+    /* Creat the file io.txt, after which the simulator will start its process */
+    FILE * io = fopen ("io.txt", "w");
+    fclose (io);
 
     /* automation is checked in a loop: */
     automation_loop (activeRules, numberOfRules, activeDevices, numberOfDevices);
@@ -368,7 +455,7 @@ int main(int argc, char const *argv[])
     /* If the file doesn't exist, then create the file. */
     if(rulesIn == NULL) 
     {
-        printf ("Regl filen er ikke ekstisterende. Den skabes.\n");
+        printf ("Rule file doesn't exist, it's being created.\n");
         FILE * tmp = fopen ("rules_test.txt", "w");
         fclose (tmp);
     }
@@ -376,7 +463,7 @@ int main(int argc, char const *argv[])
     /* If the file doesn't exist, then create the file. */
     if(devicesIn == NULL) 
     {
-        printf ("Enheds filen er ikke ekstisterende. Den skabes.\n");
+        printf ("Device file doesn't exist, it's being created.\n");
         FILE * tmp = fopen ("devices_test.txt", "w");
         fclose (tmp);
     }
@@ -441,10 +528,18 @@ int main(int argc, char const *argv[])
 
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
 
+    /* remove temporary files used for communication */
+    remove("time.txt");
+
+    for(i = 0; i < numberOfDevices; i++)
+    {
+        remove(activeDevices[i].name);
+    }
+
     return 0;
 }
 
-/* Outline for rules file format (1) rules: 
+/* Outline for rules file format (1): 
 
 AUTO_TURN_ON_LIGHT
 1
@@ -455,10 +550,24 @@ AUTO_TURN_ON_LIGHT
 
 */
 
-/* Outline for rules file format (2) devices: 
+/* Outline for device file format (2): 
 
 TEST_LAMPE_ENTRANCE
 22
-1
+
+*/
+
+
+/* Outline for time file format (3):
+
+TIMESTAMP (IN MINUTES)
+
+ie. 360 (== 06:00)
+
+*/
+
+/* Outline for io file format (4):
+
+Filename is name of device, contens is state (0 or 1). 
 
 */

@@ -402,7 +402,7 @@ void write_current_state (device *activeDevices, int numberOfDevices)
 
 void check_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
-
+    
 }
 
 void trigger_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)

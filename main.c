@@ -12,9 +12,9 @@
 #include <string.h>
 #include <time.h> 
 
-#define MAX_RULES       100
-#define MAX_DEVICES     100
-#define DEVICES_PR_RULE 10
+#define MAX_RULES           100
+#define MAX_DEVICES         100
+#define DEVICES_PR_RULE     10
 
 typedef struct {
     char name[50];
@@ -128,13 +128,14 @@ void print_single_rule (rule *activeRules, int ruleNumber)
 
 int add_rule (rule *activeRules, int numberOfRules) 
 {
+    int i;
+
     printf("Navn paa regel:\n>");
     scanf("%s", activeRules[numberOfRules].name);
     activeRules[numberOfRules].active = 1;
     activeRules[numberOfRules].timerBased = 1;
     activeRules[numberOfRules].min = 485;
 
-    int i;
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
         activeRules[numberOfRules].dependencies[i] = -1;
@@ -146,7 +147,7 @@ int add_rule (rule *activeRules, int numberOfRules)
 
 int delete_rule (rule *activeRules, int numberOfRules)
 {
-    int ruleNumber;
+    int ruleNumber, i, j;;
     do {
         printf("Enter the number of the rule which is to be delted: (-1 to quit)\n>");
         scanf("%d", &ruleNumber);
@@ -167,7 +168,6 @@ int delete_rule (rule *activeRules, int numberOfRules)
      * Looped to the end of the array.
      */
 
-    int i, j;
     for ( i = ruleNumber; i < numberOfRules - 1; i++ )
     {
         strcpy (activeRules[i].name, activeRules[i + 1].name);
@@ -281,14 +281,13 @@ int add_device (device *activeDevices, int numberOfDevices)
 int delete_device (device *activeDevices, int numberOfDevices)
 {
     /* To delete by id, the id corrisponding to the locations in the array must be found */
-    int idInArray[numberOfDevices - 1], i;
+    int idInArray[MAX_DEVICES], i, deviceNumber, option = -2;
     for (i = 0; i < numberOfDevices; i++)
     {
         idInArray[i] = activeDevices[i].id;
         printf("%d\n", i);
     }
 
-    int deviceNumber, option = -2;
     do {
         printf("Enter the id of the device which is to be delted: (-1 to quit)\n");
         for (i = 0; i < numberOfDevices; i++)
@@ -330,14 +329,15 @@ int delete_device (device *activeDevices, int numberOfDevices)
 
 void save_files (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
-    /* Open file in write mode and write all rules */
-    FILE * rulesOut = fopen ("rules_test.txt", "w");
+    /* Open files in write mode and write all rules and devices*/
+    FILE * rulesOut, * devicesOut;
+
+    rulesOut = fopen ("rules_test.txt", "w");
     write_rules (rulesOut, activeRules, numberOfRules);
     printf ("Rules written (%d)\n", numberOfRules);
     fclose (rulesOut);
 
-    /* Open file in write mode and write all devices */
-    FILE * devicesOut = fopen ("devices_test.txt", "w");
+    devicesOut = fopen ("devices_test.txt", "w");
     write_devices (devicesOut, activeDevices, numberOfDevices);
     printf ("Devices written (%d)\n", numberOfDevices);
     fclose (devicesOut); 
@@ -368,12 +368,12 @@ void load_current_state (device *activeDevices, int numberOfDevices)
 {
     int i;
     char filename[50];
+    FILE * tmp;
     for (i = 0; i < numberOfDevices; i++)
     {
         snprintf(filename, sizeof(filename), "%d", activeDevices[i].id);
-        FILE * tmp;
-        tmp = fopen(filename, "r");
 
+        tmp = fopen(filename, "r");
         /* Exit on failure */
         if (tmp == NULL)
         {
@@ -390,10 +390,10 @@ void write_current_state (device *activeDevices, int numberOfDevices)
 {
     int i;
     char filename[50];
+    FILE * tmp;
     for (i = 0; i < numberOfDevices; i++)
     {
         snprintf(filename, sizeof(filename), "%d", activeDevices[i].id);
-        FILE * tmp;
         tmp = fopen(filename, "w");
         fprintf (tmp, "%d\n", activeDevices[i].state);
         fclose (tmp);
@@ -402,10 +402,10 @@ void write_current_state (device *activeDevices, int numberOfDevices)
 
 void check_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
-    
+
 }
 
-void trigger_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
+void trigger_rule_by_time (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
     int i, j;
     for (i = 0; i < DEVICES_PR_RULE; i++)
@@ -415,7 +415,7 @@ void trigger_rule (rule *activeRules, int ruleNumber, device *activeDevices, int
             if (activeDevices[j].id == activeRules[ruleNumber].reactants[i])
             {
                 activeDevices[j].state = 1;
-                printf("Rule %s actived device %s\n", activeRules[i].name, activeDevices[j].name);
+                printf("Rule %s actived device %s (TIMEBASED)\n", activeRules[i].name, activeDevices[j].name);
             }
         }
     }
@@ -431,48 +431,50 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
     /* Get the time in order to compare it later */
     int i,
         min1 = get_current_time_in_minutes(),
-        min2;
+        min2,
+        runAlready = 0;
 
-
-    /* loop start */
-
-
-
-    if((int) time(NULL) % 2 == 0)
+    while(runAlready == 0)
     {
-        printf("Tid er lige!!\n");
-
-        /* Read current io from files */
-        load_current_state (activeDevices, numberOfDevices);
-
-        /* Checks if any timerBased rules should trigger */
-
-        min2 = get_current_time_in_minutes();
-        for (i = 0; i < numberOfRules; i++)
+        if(!runAlready && (int) time(NULL) % 2 == 0)
         {
-            if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min <= min2))
-                trigger_rule(activeRules, i, activeDevices, numberOfDevices);
+            printf("Tid er lige!!\n");
+
+            /* Read current io from files */
+            load_current_state (activeDevices, numberOfDevices);
+
+            /* Checks if any timerBased rules should trigger */
+            min2 = get_current_time_in_minutes();
+            for (i = 0; i < numberOfRules; i++)
+            {
+                if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min <= min2))
+                    trigger_rule_by_time(activeRules, i, activeDevices, numberOfDevices);
+            }
+
+            /* Write to files ones rules have been triggered */
+            write_current_state (activeDevices, numberOfDevices);
+
+            runAlready = 1;
+            break; /* TEMP: BREAK LOOP IF COMPLETED */    
+        } else {
+            printf("Tid er ulige\n");
         }
-        
-    } else {
-        printf("Tid er ulige\n");
-    }
-
-    /* loop end */
-
-    /* TBI: WRITE RULES CONSEQUENCES TO FILES */
+    }    
 }
 
 void automation_init (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
+    FILE * start;
+    time_t time_start;
+    
     printf("Saving all rules [%d] and devices [%d]\n", numberOfRules, numberOfDevices);
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
-    time_t time_start;
     time(&time_start);
     printf("Automation started at: %s\n", ctime (&time_start));
 
     /* Creat the file io.txt, after which the simulator will start its process */
-    FILE * start = fopen ("start", "w");
+    
+    start = fopen ("start", "w");
 
     fclose (start);
 
@@ -482,37 +484,43 @@ void automation_init (rule *activeRules, int numberOfRules, device *activeDevice
 
 int main(int argc, char const *argv[])
 {
+    /* Initialize variables */
     FILE * rulesIn = fopen ("rules_test.txt", "r");
     FILE * devicesIn = fopen ("devices_test.txt", "r");
+    int i,
+        numberOfRules,
+        numberOfDevices;
+    rule *activeRules;
+    device *activeDevices;
 
     /* If the file doesn't exist, then create the file. */
     if(rulesIn == NULL) 
     {
+        FILE * tmp;
         printf ("Rule file doesn't exist, it's being created.\n");
-        FILE * tmp = fopen ("rules_test.txt", "w");
+        tmp = fopen ("rules_test.txt", "w");
         fclose (tmp);
     }
 
     /* If the file doesn't exist, then create the file. */
     if(devicesIn == NULL) 
     {
+        FILE * tmp;
         printf ("Device file doesn't exist, it's being created.\n");
-        FILE * tmp = fopen ("devices_test.txt", "w");
+        tmp = fopen ("devices_test.txt", "w");
         fclose (tmp);
     }
 
-    int i;
-
-    /* Initialise arrays of rules and devices */
-    rule *activeRules = (rule *) calloc (MAX_RULES, sizeof(rule));
-    device *activeDevices = (device *) calloc (MAX_DEVICES, sizeof(device));
+    /* Allocate and zero initialze arrays of rules and devices */
+    activeRules = (rule *) calloc (MAX_RULES, sizeof(rule));
+    activeDevices = (device *) calloc (MAX_DEVICES, sizeof(device));
 
     /* Load existing rules from file */
-    int numberOfRules = load_rules (rulesIn, activeRules);
+    numberOfRules = load_rules (rulesIn, activeRules);
     fclose (rulesIn);
 
     /* Load existing devices from file */
-    int numberOfDevices = load_devices (devicesIn, activeDevices);
+    numberOfDevices = load_devices (devicesIn, activeDevices);
     fclose (devicesIn);
 
     /* Print loading info */

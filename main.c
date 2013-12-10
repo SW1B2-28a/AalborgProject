@@ -261,11 +261,11 @@ int add_device (device *activeDevices, int numberOfDevices)
     {
         if (strcmp (tmp, activeDevices[i].name) == 0)
         {
-            printf("Device's name isn't unique. Failed to create device.\n");
+            printf("Device's name already exists. Failed to create device.\n");
             return numberOfDevices;
         }
     }
-    
+
     strcpy (activeDevices[i].name, tmp);
     
     activeDevices[numberOfDevices].state = 0;
@@ -377,10 +377,26 @@ void load_current_state (device *activeDevices, int numberOfDevices)
             printf("Loading file %s failed. Quitting.\n", activeDevices[i].name);
             exit(1);
         }
-        fscanf(tmp, "%d", &activeDevices[i].state);
+        fscanf (tmp, "%d", &activeDevices[i].state);
         fclose (tmp);
     }
 }
+
+void write_current_state (device *activeDevices, int numberOfDevices)
+{
+    int i;
+    char filename[50];
+    for (i = 0; i < numberOfDevices; i++)
+    {
+        snprintf(filename, sizeof(filename), "%d", activeDevices[i].id);
+        FILE * tmp;
+        tmp = fopen(filename, "w");
+        fprintf (tmp, "%d\n", activeDevices[i].state);
+        fclose (tmp);
+    }
+}
+
+
 
 void check_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
@@ -527,6 +543,7 @@ int main(int argc, char const *argv[])
     }
 
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
+    write_current_state (activeDevices, numberOfDevices);
 
     /* remove temporary files used for communication */
     remove("time.txt");

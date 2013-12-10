@@ -367,9 +367,12 @@ int get_current_time_in_minutes (void)
 void load_current_state (device *activeDevices, int numberOfDevices)
 {
     int i;
+    char filename[50];
     for (i = 0; i < numberOfDevices; i++)
     {
-        FILE * tmp = fopen(activeDevices[i].name, "r");
+        snprintf(filename, sizeof(filename), "%d", activeDevices[i].id);
+        FILE * tmp;
+        tmp = fopen(filename, "r");
 
         /* Exit on failure */
         if (tmp == NULL)
@@ -379,6 +382,7 @@ void load_current_state (device *activeDevices, int numberOfDevices)
         }
         fscanf (tmp, "%d", &activeDevices[i].state);
         fclose (tmp);
+        printf("%s state is %d\n", activeDevices[i].name, activeDevices[i].state);
     }
 }
 
@@ -396,16 +400,25 @@ void write_current_state (device *activeDevices, int numberOfDevices)
     }
 }
 
-
-
 void check_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
 
 }
 
-void trigger_rule (rule *activeRules, int i)
+void trigger_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
-
+    int i, j;
+    for (i = 0; i < DEVICES_PR_RULE; i++)
+    {
+        for (j = 0; j < numberOfDevices; j++)
+        {
+            if (activeDevices[j].id == activeRules[ruleNumber].reactants[i])
+            {
+                activeDevices[j].state = 1;
+                printf("Rule %s actived device %s\n", activeRules[i].name, activeDevices[j].name);
+            }
+        }
+    }
 }
 
 void automation_loop (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
@@ -423,11 +436,14 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
 
     /* loop start */
 
-    /* Read current io from files */
+
 
     if((int) time(NULL) % 2 == 0)
     {
         printf("Tid er lige!!\n");
+
+        /* Read current io from files */
+        load_current_state (activeDevices, numberOfDevices);
 
         /* Checks if any timerBased rules should trigger */
 
@@ -435,7 +451,7 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
         for (i = 0; i < numberOfRules; i++)
         {
             if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min <= min2))
-                trigger_rule(activeRules, i); 
+                trigger_rule(activeRules, i, activeDevices, numberOfDevices);
         }
         
     } else {
@@ -456,8 +472,9 @@ void automation_init (rule *activeRules, int numberOfRules, device *activeDevice
     printf("Automation started at: %s\n", ctime (&time_start));
 
     /* Creat the file io.txt, after which the simulator will start its process */
-    FILE * io = fopen ("io.txt", "w");
-    fclose (io);
+    FILE * start = fopen ("start", "w");
+
+    fclose (start);
 
     /* automation is checked in a loop: */
     automation_loop (activeRules, numberOfRules, activeDevices, numberOfDevices);
@@ -545,13 +562,14 @@ int main(int argc, char const *argv[])
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
     write_current_state (activeDevices, numberOfDevices);
 
-    /* remove temporary files used for communication */
+    remove("start");
+    /* remove temporary files used for communication 
     remove("time.txt");
 
     for(i = 0; i < numberOfDevices; i++)
     {
-        remove(activeDevices[i].name);
-    }
+        remove(activeDevices[i].id);
+    } */
 
     return 0;
 }

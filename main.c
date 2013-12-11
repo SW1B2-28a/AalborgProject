@@ -3,7 +3,7 @@
  * Version 0.2 - Initial idea (Indev) 
  * 24-11-2013
  *
- * Outline for fileformats located in the end of this file.
+ * Outline for file formats located in the end of this file.
  * Variables i and j are used as counters in loops etc.
  */
 
@@ -16,6 +16,8 @@
 #define MAX_DEVICES         100
 #define DEVICES_PR_RULE     10
 
+
+/* In order to secure compatibility with both windows and Linux the code bellow is used.*/ 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #define OS                  1
 #include <windows.h> 
@@ -156,11 +158,11 @@ int add_rule (rule *activeRules, int numberOfRules)
 {
     int i;
 
-    printf("Navn paa regel:\n>");
+    printf("Enter a name for the rule (no spaces):\n>");
     scanf("%s", activeRules[numberOfRules].name);
     activeRules[numberOfRules].active = 1;
-    activeRules[numberOfRules].timerBased = 1;
-    activeRules[numberOfRules].min = 485;
+    activeRules[numberOfRules].timerBased = 0;
+    activeRules[numberOfRules].min = 0;
 
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
@@ -176,13 +178,17 @@ int delete_rule (rule *activeRules, int numberOfRules)
 {
     int ruleNumber, i, j;;
     do {
-        printf("Enter the number of the rule which is to be delted: (-1 to quit)\n>");
+        printf("Enter the number of the rule which is to be deleted: (-1 to quit)\n");
+        for (i = 0; i < numberOfRules; i++)
+        {
+            printf("%d: %s\n", i, activeRules[i].name);
+        }
+        printf(">");
         scanf("%d", &ruleNumber);
         if (ruleNumber > numberOfRules - 1 || ruleNumber < - 1)
         {
             printf("Rule not found\n");
-        } 
-            else if ( ruleNumber == - 1) 
+        } else if ( ruleNumber == - 1) 
         {
             return numberOfRules;
         }
@@ -234,6 +240,8 @@ void edit_rule (rule *activeRules, int numberOfRules)
    /* 
     * TO-BE-IMPLEMENTED (AFTER ADD_RULE IS DONE)
     */ 
+
+
 }
 
 int load_devices (FILE *devices, device *activeDevices)
@@ -308,7 +316,7 @@ int add_device (device *activeDevices, int numberOfDevices)
 
 int delete_device (device *activeDevices, int numberOfDevices)
 {
-    /* To delete by id, the id corrisponding to the locations in the array must be found */
+    /* To delete by id, the id corresponding to the locations in the array must be found */
     int idInArray[MAX_DEVICES], i, deviceNumber, option = -2;
     for (i = 0; i < numberOfDevices; i++)
     {
@@ -317,15 +325,15 @@ int delete_device (device *activeDevices, int numberOfDevices)
     }
 
     do {
-        printf("Enter the id of the device which is to be delted: (-1 to quit)\n");
+        printf("Enter the id of the device which is to be deeted: (-1 to quit)\n");
         for (i = 0; i < numberOfDevices; i++)
         {
             printf("%d: %s\n", activeDevices[i].id, activeDevices[i].name);
         }
-        printf("> ");
+        printf(">");
         scanf("%d", &deviceNumber);
 
-        if (option == -1)
+        if (deviceNumber == -1)
         {
             return numberOfDevices;
         }
@@ -338,6 +346,7 @@ int delete_device (device *activeDevices, int numberOfDevices)
             }
         }
 
+        /* if the option variable haven't been set by the above loop, it's -2 */
         if (option == -2)
         {
             printf("Rule not found, try again\n");
@@ -429,11 +438,6 @@ void write_current_state (device *activeDevices, int numberOfDevices)
     }
 }
 
-void check_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
-{
-
-}
-
 void trigger_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)
 {
     int i, j;
@@ -483,8 +487,8 @@ int check_rule_by_state (rule *aR, int rN, device *aD, int NoD)
 
 void automation_loop (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
-    /* Checks if the time (in secounds) is equal or odd, if equal it performs checks actions
-     * This is done to avoid having both programs (the simulatior and this) open a given file at the same time.
+    /* Checks if the time (in seconds) is equal or odd, if equal it performs checks actions
+     * This is done to avoid having both programs (the simulator and this) open a given file at the same time.
      * The current time. 
      */
 
@@ -497,7 +501,7 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
 
     while(min1 != 0 && min1 < 510)
     {        
-        /* If a check havn't accured and the time is equal check */
+        /* If a check haven't occurred and the time is equal check */
         if(!runAlready && (int) time(NULL) % 2 == 0)
         {
             printf("Checking ... %d\n", (int) time(NULL));
@@ -511,7 +515,7 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
             {
                 if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min < min2))
                 {
-                    printf("%s\n", "tid");
+                    printf("%s triggered by time.\n", activeRules[i].name);
                     trigger_rule(activeRules, i, activeDevices, numberOfDevices);
                 }
             }
@@ -519,12 +523,12 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
             /* reset min1 */
             min1 = min2;
 
-            /* check if any statebased rules should trigger */
+            /* check if any state based rules should trigger */
             for (i = 0; i < numberOfRules; i++)
             {
                 if (check_rule_by_state (activeRules, i, activeDevices, numberOfDevices))
                 {
-                    /* printf("%s\n", "state"); */
+                    printf("%s triggered by state.\n", activeRules[i].name);
                     trigger_rule(activeRules, i, activeDevices, numberOfDevices);
                 }
             }
@@ -541,7 +545,9 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
             runAlready = 0;
         }
 
-        Sleep(50);
+        /* This sleeps the thread avoiding looping though this 
+         * while loop many time unnecessarily (causes cpu load) */
+        Sleep(1000);
     }
 }
 
@@ -695,12 +701,12 @@ TEST_LAMPE_ENTRANCE
 
 TIMESTAMP (IN MINUTES)
 
-ie. 360 (== 06:00)
+IE. 360 (== 06:00)
 
 */
 
 /* Outline for io file format (4):
 
-Filename is name of device, contens is state (0 or 1). 
+Filename is name of device, contents is state (0 or 1). 
 
 */

@@ -107,6 +107,8 @@ void write_rules (FILE *rules, rule *activeRules, int numberOfRules)
             fprintf(rules, "%d ", activeRules[i].reactantsEnable[j]);
         }
 
+        fprintf(rules, "\n");
+
         for (j = 0; j < DEVICES_PR_RULE; j++)
         {
             fprintf(rules, "%d ", activeRules[i].reactantsDisable[j]);
@@ -219,28 +221,100 @@ int delete_rule (rule *activeRules, int numberOfRules)
     return numberOfRules - 1;
 }
 
-void edit_rule (rule *activeRules, int numberOfRules)
+void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
-    int ruleNumber;
+    int ruleNumber, option, devicesInRule[DEVICES_PR_RULE], i, cnt = 0, tmp, j;
     do {
-        printf("Enter the number of the rule which is to be edited: (-1 to quit)\n>");
+        printf("Enter the number of the rule which is to be edited: (-1 to quit)\n");
+        for (i = 0; i < numberOfRules; i++)
+        {
+            printf("%d: %s\n", i, activeRules[i].name);
+        }
+        printf(">");
         scanf("%d", &ruleNumber);
-        if (ruleNumber > numberOfRules || ruleNumber < - 1)
+        if (ruleNumber >= numberOfRules || ruleNumber < - 1)
         {
             printf("Rule not found\n");
-        } 
-            else if ( ruleNumber == - 1) 
-        {
+        }  else if ( ruleNumber == - 1) {
             /* void function return with no value to exit */
             return;
         }
 
-    } while (ruleNumber > numberOfRules || ruleNumber < - 1);
+    } while (ruleNumber >= numberOfRules || ruleNumber < - 1);
 
-   /* 
-    * TO-BE-IMPLEMENTED (AFTER ADD_RULE IS DONE)
-    */ 
+    printf("\n");
+    print_single_rule (activeRules, ruleNumber);
 
+    /* Prompt user for which action to take: */
+    printf("Please select an action:\n"
+    	   "1: Go Back to main menu.\n"
+    	   "2: Go one step back and select a different rule.\n"
+    	   "3: Edit rule name.\n"
+    	   "4: Set time activation settings.\n"
+    	   "5: Set device activation devices.\n"
+    	   "6: Set which devices will be enabled.\n"
+    	   "7: Set which devices will be disabled.\n"
+    	   ">");
+
+	scanf("%d", (int *) &option);
+    printf("---------------------\n");
+    switch (option)
+    {
+        case 1: 
+        	return; 
+        case 2: 
+        	edit_rule (activeRules, numberOfRules, activeDevices, numberOfDevices); return;
+        case 3: 
+        	printf("Enter a new name (Currently '%s'):\n>", activeRules[ruleNumber].name);
+        	scanf("%s", activeRules[ruleNumber].name);
+        	break;
+        case 4:
+        	printf("Currently time activation is %sabled (At time %02d:%02d)\n"
+        		   "Enter 1 if you want it enabled or 0 if not.\n"
+        		   ">", 
+        		activeRules[ruleNumber].timerBased ? "en" : "dis", activeRules[ruleNumber].min / 60,
+        		activeRules[ruleNumber].min % 60);
+        	scanf("%d", &activeRules[ruleNumber].timerBased);
+        	if (activeRules[ruleNumber].timerBased) 
+        	{
+        		int hr, mn;
+        		printf("Set the time you want it to active at ( HH:MM IE. 08:05 )\n>");
+        		scanf("%d:%d", &hr, &mn);
+        		activeRules[ruleNumber].min = hr * 60 + mn;
+        	}
+        	break;
+        case 5:
+            
+            for (i = 0; i < DEVICES_PR_RULE; i++)
+            {
+                if (activeRules[ruleNumber].dependencies[i] != -1)
+                {
+                    /* This gets the id of the device, not the position in array*/
+                    tmp = activeRules[ruleNumber].dependencies[i];
+                    for (j = 0; j < numberOfRules; j++)
+                    {
+                        if (activeDevices[j].id == tmp)
+                        {
+                            devicesInRule[cnt] = j;
+                            cnt++;
+                        }
+                    }
+                }
+            }
+
+            printf("This rule is actived by %d device%s.\n", cnt, cnt > 1 ? "s" : "");
+            if (cnt > 0)
+            {
+                printf("The devices are:\n");
+                for (i = 0; i < cnt; ++i)
+                {
+                    printf("%d: %s\n", activeDevices[devicesInRule[i]].id ,activeDevices[devicesInRule[i]].name);
+                }
+            } 
+
+            break;
+        default: printf("Invalid option try again.\n"); break;
+    }
 
 }
 
@@ -642,7 +716,13 @@ int main(int argc, char const *argv[])
                    "  '8' Delete device\n"
                    "  '9' Start home automation\n"
                    ">", numberOfRules, numberOfDevices);
-            scanf("%d", (int *) &option);
+            if(scanf("%d", (int *) &option) != 1)
+            {
+                /* If input isn't as expected (NaN) then save files and quit */
+                printf("Invalid input, bye.\n");
+                save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
+                exit(1);
+            }
             printf("---------------------\n");
             switch (option)
             {
@@ -651,7 +731,7 @@ int main(int argc, char const *argv[])
                 case 2: for (i = 0; i < numberOfDevices; i++) {print_single_device(activeDevices, i);} break;
                 case 3: numberOfRules = add_rule (activeRules, numberOfRules); break;
                 case 4: numberOfDevices = add_device (activeDevices, numberOfDevices); break;
-                case 5: edit_rule (activeRules, numberOfRules); break;
+                case 5: edit_rule (activeRules, numberOfRules, activeDevices, numberOfDevices); break;
                 case 6:  break;
                 case 7: numberOfRules = delete_rule (activeRules, numberOfRules); break;
                 case 8: numberOfDevices = delete_device (activeDevices, numberOfDevices); break;

@@ -3,6 +3,8 @@
  * Version 1.0 - Initial Concept  
  * 24-11-2013
  *
+ * This is the main part of the program.
+ *
  * Outline for file formats located in the end of this file.
  * Variables i and j are used as counters in loops etc.
  */

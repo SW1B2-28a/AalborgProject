@@ -1,4 +1,8 @@
-asd
+d_tid
 0
-gfdgfd
+d_state
+1
+e_tid
 2
+e_state
+3

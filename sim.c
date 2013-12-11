@@ -7,6 +7,8 @@
 #include <windows.h> 
 #else
 #define OS                  0
+#include <unistd.h>
+int Sleep(int sleepMs) {return sleep(sleepMs / 1000);}
 #endif
 
 int main (void)
@@ -19,21 +21,17 @@ int main (void)
 	FILE * ftime;
 	FILE * start;
 
-	while (ready)
+    /* Wait for main to be ready */
+	while (!ready)
 	{
 		start = fopen ("start", "r");
-		if (start == NULL)
+		if (start != NULL)
 		{
-			printf("ups\n");
-		} else {
 			ready = 1;
 		}
 
-		/* If windows use sleep */
-        if(OS)
-        {
-            Sleep(500);
-        }
+        printf("Fail\n");
+        Sleep(1000);
 	}
 
 	while (min < 520)

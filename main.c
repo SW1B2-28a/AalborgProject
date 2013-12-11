@@ -21,13 +21,15 @@
 #include <windows.h> 
 #else
 #define OS                  0
+#include <unistd.h>
+int Sleep(int sleepMs) {return sleep(sleepMs / 1000);}
 #endif
 
 typedef struct {
     char name[50];
     int dependencies[DEVICES_PR_RULE],      /* devices (id) on which the rule depend upon   */
-        reactantsEnable[DEVICES_PR_RULE],         /* devices (id) on which the rule enables       */
-        reactantsDisable[DEVICES_PR_RULE],         /* devices (id) on which the rule disables      */
+        reactantsEnable[DEVICES_PR_RULE],   /* devices (id) on which the rule enables       */
+        reactantsDisable[DEVICES_PR_RULE],  /* devices (id) on which the rule disables      */
         active,                             /* 0 = inactive                                 */
         timerBased,                         /* if 1, can also be actived by timer           */
         min;                                /* Time to start (in minutes 0-1440 if enabled  */
@@ -353,6 +355,7 @@ int delete_device (device *activeDevices, int numberOfDevices)
     return numberOfDevices - 1;
 }
 
+/* Rename io */
 void save_files (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
     /* Open files in write mode and write all rules and devices*/
@@ -397,7 +400,7 @@ void load_current_state (device *activeDevices, int numberOfDevices)
     FILE * tmp;
     for (i = 0; i < numberOfDevices; i++)
     {
-        snprintf(filename, sizeof(filename), "%d", activeDevices[i].id);
+        sprintf(filename, "%d", activeDevices[i].id);
 
         tmp = fopen(filename, "r");
         /* Exit on failure */
@@ -419,7 +422,7 @@ void write_current_state (device *activeDevices, int numberOfDevices)
     FILE * tmp;
     for (i = 0; i < numberOfDevices; i++)
     {
-        snprintf(filename, sizeof(filename), "%d", activeDevices[i].id);
+        sprintf(filename, "%d", activeDevices[i].id);
         tmp = fopen(filename, "w");
         fprintf (tmp, "%d\n", activeDevices[i].state);
         fclose (tmp);
@@ -497,7 +500,7 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
         /* If a check havn't accured and the time is equal check */
         if(!runAlready && (int) time(NULL) % 2 == 0)
         {
-            printf("Checking ...\n");
+            printf("Checking ... %d\n", (int) time(NULL));
 
             /* Read current io from files */
             load_current_state (activeDevices, numberOfDevices);
@@ -538,11 +541,7 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
             runAlready = 0;
         }
 
-        /* If windows use sleep */
-        if(OS)
-        {
-            Sleep(50);
-        }
+        Sleep(50);
     }
 }
 

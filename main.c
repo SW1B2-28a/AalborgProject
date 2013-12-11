@@ -242,8 +242,9 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
 
     } while (ruleNumber >= numberOfRules || ruleNumber < - 1);
 
-    printf("\n");
+    printf("\n---------------------\n");
     print_single_rule (activeRules, ruleNumber);
+    printf("---------------------\n");
 
     /* Prompt user for which action to take: */
     printf("Please select an action:\n"
@@ -284,7 +285,6 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
         	}
         	break;
         case 5:
-            
             for (i = 0; i < DEVICES_PR_RULE; i++)
             {
                 if (activeRules[ruleNumber].dependencies[i] != -1)
@@ -305,15 +305,137 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
             printf("This rule is actived by %d device%s.\n", cnt, cnt > 1 ? "s" : "");
             if (cnt > 0)
             {
-                printf("The devices are:\n");
-                for (i = 0; i < cnt; ++i)
+                printf("The device%s:\n", cnt > 1 ? "s are" : " is");
+                for (i = 0; i < cnt; i++)
                 {
-                    printf("%d: %s\n", activeDevices[devicesInRule[i]].id ,activeDevices[devicesInRule[i]].name);
+                    printf("%d: %s\n", activeDevices[devicesInRule[i]].id, activeDevices[devicesInRule[i]].name);
                 }
-            } 
+            }
+            printf("Avalible devices is:\n");
+            for (i = 0; i < numberOfDevices; i++)
+            {
+                printf("%d %s\n", activeDevices[i].id, activeDevices[i].name);
+            }
+            printf("Enter ALL devices (id) to be added seperate by newline (-1 to quit)\n>");
+            cnt = 0;
+            while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
+            {
+                if(tmp == -1)
+                    break;
+                activeRules[ruleNumber].dependencies[cnt] = tmp;
+                cnt++;
+                printf(">");
+            }
 
+            for (i = cnt + 1; i < DEVICES_PR_RULE; i++)
+            {
+                activeRules[ruleNumber].dependencies[i] = -1;
+            }
+            printf("Rule saved.\n");
             break;
-        default: printf("Invalid option try again.\n"); break;
+        case 6:
+            
+            for (i = 0; i < DEVICES_PR_RULE; i++)
+            {
+                if (activeRules[ruleNumber].reactantsEnable[i] != -1)
+                {
+                    /* This gets the id of the device, not the position in array*/
+                    tmp = activeRules[ruleNumber].reactantsEnable[i];
+                    for (j = 0; j < numberOfRules; j++)
+                    {
+                        if (activeDevices[j].id == tmp)
+                        {
+                            devicesInRule[cnt] = j;
+                            cnt++;
+                        }
+                    }
+                }
+            }
+
+            printf("This rule actives %d device%s.\n", cnt, cnt > 1 ? "s" : "");
+            if (cnt > 0)
+            {
+                printf("The devices are:\n");
+                for (i = 0; i < cnt; i++)
+                {
+                    printf("%d: %s\n", activeDevices[devicesInRule[i]].id, activeDevices[devicesInRule[i]].name);
+                }
+            }
+            printf("Avalible devices is:\n");
+            for (i = 0; i < numberOfDevices; i++)
+            {
+                printf("%d %s\n", activeDevices[i].id, activeDevices[i].name);
+            }
+            printf("Enter ALL devices (id) to be added seperate by newline (-1 to quit)\n>");
+            cnt = 0;
+            while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
+            {
+                if(tmp == -1)
+                    break;
+                activeRules[ruleNumber].reactantsEnable[cnt] = tmp;
+                cnt++;
+                printf(">");
+            }
+
+            for (i = cnt + 1; i < DEVICES_PR_RULE; i++)
+            {
+                activeRules[ruleNumber].reactantsEnable[i] = -1;
+            }
+            printf("Rule saved.\n");
+            break;
+        case 7:
+            
+            for (i = 0; i < DEVICES_PR_RULE; i++)
+            {
+                if (activeRules[ruleNumber].reactantsDisable[i] != -1)
+                {
+                    /* This gets the id of the device, not the position in array*/
+                    tmp = activeRules[ruleNumber].reactantsDisable[i];
+                    for (j = 0; j < numberOfRules; j++)
+                    {
+                        if (activeDevices[j].id == tmp)
+                        {
+                            devicesInRule[cnt] = j;
+                            cnt++;
+                        }
+                    }
+                }
+            }
+
+            printf("This rule deactives %d device%s.\n", cnt, cnt > 1 ? "s" : "");
+            if (cnt > 0)
+            {
+                printf("The devices are:\n");
+                for (i = 0; i < cnt; i++)
+                {
+                    printf("%d: %s\n", activeDevices[devicesInRule[i]].id, activeDevices[devicesInRule[i]].name);
+                }
+            }
+            printf("Avalible devices is:\n");
+            for (i = 0; i < numberOfDevices; i++)
+            {
+                printf("%d %s\n", activeDevices[i].id, activeDevices[i].name);
+            }
+            printf("Enter ALL devices (id) to be added seperate by newline (-1 to quit)\n>");
+            cnt = 0;
+            while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
+            {
+                if(tmp == -1)
+                    break;
+                activeRules[ruleNumber].reactantsDisable[cnt] = tmp;
+                cnt++;
+                printf(">");
+            }
+
+            for (i = cnt + 1; i < DEVICES_PR_RULE; i++)
+            {
+                activeRules[ruleNumber].reactantsDisable[i] = -1;
+            }
+            printf("Rule saved.\n");
+            break;
+
+
+        default: printf("Invalid option. (%d)\n", option); break;
     }
 
 }
@@ -395,7 +517,6 @@ int delete_device (device *activeDevices, int numberOfDevices)
     for (i = 0; i < numberOfDevices; i++)
     {
         idInArray[i] = activeDevices[i].id;
-        printf("%d\n", i);
     }
 
     do {

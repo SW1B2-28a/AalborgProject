@@ -121,7 +121,6 @@ void print_single_rule (rule *activeRules, int ruleNumber)
     printf("Active:\t\t%d\n", activeRules[ruleNumber].active);
 
     printf("Timer based:\t%d\n", activeRules[ruleNumber].timerBased);
-
     if (activeRules[ruleNumber].timerBased == 1) 
     {
         printf("Active at time:\t%02d:%02d\n", 
@@ -493,10 +492,8 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
         runAlready = 0,
         cnt = 0;
 
-    while(min1 != 0 && cnt < 3)
-    {
-        min1 = get_current_time_in_minutes();
-        
+    while(min1 != 0 && min1 < 510)
+    {        
         /* If a check havn't accured and the time is equal check */
         if(!runAlready && (int) time(NULL) % 2 == 0)
         {
@@ -509,19 +506,22 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
             min2 = get_current_time_in_minutes();
             for (i = 0; i < numberOfRules; i++)
             {
-                if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min <= min2))
+                if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min < min2))
                 {
                     printf("%s\n", "tid");
                     trigger_rule(activeRules, i, activeDevices, numberOfDevices);
                 }
             }
 
+            /* reset min1 */
+            min1 = min2;
+
             /* check if any statebased rules should trigger */
             for (i = 0; i < numberOfRules; i++)
             {
                 if (check_rule_by_state (activeRules, i, activeDevices, numberOfDevices))
                 {
-                    printf("%s\n", "state");
+                    /* printf("%s\n", "state"); */
                     trigger_rule(activeRules, i, activeDevices, numberOfDevices);
                 }
             }

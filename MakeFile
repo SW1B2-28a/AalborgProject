@@ -1,0 +1,4 @@
+gcc -Wall -pedantic -ansi main.c -o main
+gcc -Wall -pedantic -ansi sim.c -o sim
+
+

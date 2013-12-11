@@ -1,3 +1,12 @@
+/*
+ * B2-28a
+ * Version 1.0 - Initial Concept  
+ * 24-11-2013
+ *
+ * This is the simulator part of the program.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
@@ -15,9 +24,9 @@ int Sleep(int sleepMs) {return sleep(sleepMs / 1000);}
 
 typedef struct
 {
-	int min,
-		id,
-		setTo;
+    int min,
+        id,
+        setTo;
 } state;
 
 typedef struct {
@@ -83,70 +92,80 @@ void write_current_state (device *activeDevices, int numberOfDevices)
     }
 }
 
+void enable_random (device *activeDevices, int numberOfDevices)
+{
+    int random;
+    srand(time(NULL));
+
+    random = rand() % (numberOfDevices);
+    activeDevices[random].state = 1;
+    printf("%s turned on.\n", activeDevices[random].name);
+
+    random = rand() % (numberOfDevices);
+    activeDevices[random].state = 0;
+    printf("%s turned off.\n", activeDevices[random].name);
+}
+
 int main (void)
 {
-	int min = 460,
-		runAlready = 0,
-		ready = 0,
-		numberOfDevices,
-		random;
+    int min = 0,
+        runAlready = 0,
+        ready = 0,
+        numberOfDevices;
 
-	FILE * ftime;
-	FILE * start;
-	FILE * devicesIn;
+    FILE * ftime;
+    FILE * start;
+    FILE * devicesIn;
 
-	device *activeDevices;
+    device *activeDevices;
 
-	srand(time(NULL));
+    printf("Waiting for main to start simulation.\n");
 
     /* Wait for main to be ready */
-	while (!ready)
-	{
-		start = fopen ("start", "r");
-		if (start != NULL)
-			ready = 1;
-		else
-			printf("Fail\n");
+    while (!ready)
+    {
+        if((int) time(NULL) % 2 == 1)
+        {
+            start = fopen ("start", "r");
+            if (start != NULL)
+               ready = 1;
+        }
 
         Sleep(1000);
-	}
+    }
 
-	activeDevices = (device *) calloc (MAX_DEVICES, sizeof(device));
-	devicesIn = fopen ("devices_test.txt", "r");
+    activeDevices = (device *) calloc (MAX_DEVICES, sizeof(device));
+    devicesIn = fopen ("devices_test.txt", "r");
     numberOfDevices = load_devices (devicesIn, activeDevices);
     fclose (devicesIn);
     load_current_state (activeDevices, numberOfDevices);
-	
-	while (min < 520)
-	{
-		if(!runAlready && (int) time(NULL) % 2 == 1)
-		{
-			ftime = fopen ("time.txt","w");
-			fprintf (ftime, "%d\n", min);
-			fclose (ftime);
-			printf("Time: %02d:%02d (%d) adding 5 minutes!\n", min / 60, min % 60, min);
-			runAlready = 1;
-			min += 5;
-			
-			random = rand() % (numberOfDevices - 1);
-			activeDevices[random].state = 1;
-			printf("%s turned on.\n", activeDevices[random].name);
+    
+    while (min < 1450)
+    {
+        if(!runAlready && (int) time(NULL) % 2 == 1)
+        {
+            ftime = fopen ("time.txt","w");
+            fprintf (ftime, "%d\n", min);
+            fclose (ftime);
+            printf("Time: %02d:%02d (%d) adding 60 minutes!\n", min / 60, min % 60, min);
+            runAlready = 1;
+            min += 60;
 
-			random = rand() % (numberOfDevices - 1);
-			activeDevices[random].state = 0;
-			printf("%s turned off.\n", activeDevices[random].name);
+            enable_random (activeDevices, numberOfDevices);
 
-			write_current_state (activeDevices, numberOfDevices);
+            write_current_state (activeDevices, numberOfDevices);
 
-		}
+        }
 
-		if((int) time(NULL) % 2 == 0)
-		{
-			runAlready = 0;
-		}
+        if((int) time(NULL) % 2 == 0)
+        {
+            runAlready = 0;
+        }
 
         Sleep(1000);
-	}
+    }
 
-	return 0;
+    remove("time.txt");
+
+    return 0;
 }

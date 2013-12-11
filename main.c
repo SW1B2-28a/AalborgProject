@@ -1,6 +1,6 @@
 /*
  * B2-28a
- * Version 0.2 - Initial idea (Indev) 
+ * Version 1.0 - Initial Concept  
  * 24-11-2013
  *
  * Outline for file formats located in the end of this file.
@@ -578,22 +578,23 @@ void save_files (rule *activeRules, int numberOfRules, device *activeDevices, in
 
 int get_current_time_in_minutes (void)
 {
-    /* This function would in the real program get the current time from the OS, 
-     * but in the simulation this is done via a file written by the simulatior
-     */
-    
-    int min;
-    FILE * fcurrentTime = fopen ("time.txt", "r");
+    int min, ready = 0;
 
-    /* Check if the file exists */
-    if(fcurrentTime == NULL) 
+    FILE * ftime;
+
+    while (!ready)
     {
-        printf ("Time file doesn't exist. Open the simulator and try again\n");
-        exit(1);      
+        if((int) time(NULL) % 2 == 0)
+        {
+            ftime = fopen ("time.txt", "r");
+            if (ftime != NULL)
+               ready = 1;
+        }
+        Sleep(250);
     }
 
-    fscanf(fcurrentTime, "%d", &min);
-    fclose(fcurrentTime);
+    fscanf(ftime, "%d", &min);
+    fclose(ftime);
     return min;
 }
 
@@ -669,7 +670,7 @@ int check_rule_by_state (rule *aR, int rN, device *aD, int NoD)
         } else {
             for (j = 0; j < NoD; j++)
             {
-                if (aR[rN].dependencies[i] == aD[j].id)
+                if (aR[rN].dependencies[i] == aD[j].id && aD[j].state)
                 {
                     depAchived++;
                 }
@@ -694,12 +695,13 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
         runAlready = 0,
         cnt = 0;
 
-    while(min1 != 0 && min1 < 510)
-    {        
+    while(min1 < 1440)
+    {   
         /* If a check haven't occurred and the time is equal check */
         if(!runAlready && (int) time(NULL) % 2 == 0)
         {
-            printf("Checking ... %d\n", (int) time(NULL));
+
+            printf("Checking ... %02d:%02d\n", min1 / 60, min1 % 60);
 
             /* Read current io from files */
             load_current_state (activeDevices, numberOfDevices);
@@ -708,9 +710,9 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
             min2 = get_current_time_in_minutes();
             for (i = 0; i < numberOfRules; i++)
             {
-                if(activeRules[i].timerBased && (activeRules[i].min >= min1 && activeRules[i].min < min2))
+                if(activeRules[i].timerBased && (activeRules[i].min > min1 && activeRules[i].min <= min2))
                 {
-                    printf("%s triggered by time.\n", activeRules[i].name);
+                    printf("%s triggered by time. (%d-%d)\n", activeRules[i].name, min1, min2);
                     trigger_rule(activeRules, i, activeDevices, numberOfDevices);
                 }
             }
@@ -756,12 +758,12 @@ void automation_init (rule *activeRules, int numberOfRules, device *activeDevice
     time(&time_start);
     printf("Automation started at: %s\n", ctime (&time_start));
 
+    /* Create io files */
+    write_current_state (activeDevices, numberOfDevices);
+
     /* Create the file io.txt, after which the simulator will start its process */
     start = fopen ("start", "w");
     fclose (start);
-
-    /* Create io files */
-    write_current_state (activeDevices, numberOfDevices);
 
     /* automation is checked in a loop: */
     automation_loop (activeRules, numberOfRules, activeDevices, numberOfDevices);
@@ -772,11 +774,15 @@ int main(int argc, char const *argv[])
     /* Initialize variables */
     FILE * rulesIn = fopen ("rules_test.txt", "r");
     FILE * devicesIn = fopen ("devices_test.txt", "r");
+
     int i,
         numberOfRules,
         numberOfDevices;
+
     rule *activeRules;
     device *activeDevices;
+
+    char filename[16];
 
     /* If the file doesn't exist, then create the file. */
     if(rulesIn == NULL) 
@@ -867,14 +873,15 @@ int main(int argc, char const *argv[])
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
     write_current_state (activeDevices, numberOfDevices);
 
+    
+    /* remove temporary files used for communication */
     remove("start");
-    /* remove temporary files used for communication 
     remove("time.txt");
-
     for(i = 0; i < numberOfDevices; i++)
     {
-        remove(activeDevices[i].id);
-    } */
+        sprintf(filename, "%d", activeDevices[i].id);
+        remove(filename);
+    } 
 
     return 0;
 }

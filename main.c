@@ -862,7 +862,7 @@ int main(int argc, char const *argv[])
         automation_init (activeRules, numberOfRules, activeDevices, numberOfDevices);
     } else {
         /* Print menu */
-        int option; 
+        int option = 0; 
         do {
             printf("Please choose an option.\n"
                    "  '-1' Quit\n"
@@ -875,12 +875,11 @@ int main(int argc, char const *argv[])
                    "  '7' Delete device\n"
                    "  '8' Start home automation\n"
                    ">", numberOfRules, numberOfDevices);
-            if(scanf("%d", (int *) (&option)) != 1)
+            if(scanf("%d", (&option)) != 1)
             {
-                /* If input isn't as expected (NaN) then save files and quit */
-                printf("Invalid input, bye.\n");
-                save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
-                exit(1);
+                /* If input isn't as expected (NaN) then clear stdin */
+                printf("Invalid input.\n");
+                fgetc(stdin);
             }
             print_line_seperator();
             switch (option)

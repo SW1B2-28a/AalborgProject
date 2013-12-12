@@ -100,11 +100,17 @@ void enable_random (device *activeDevices, int numberOfDevices)
     random = rand() % (numberOfDevices);
     activeDevices[random].state = 1;
     printf("%s turned on.\n", activeDevices[random].name);
+}
+
+void disable_random (device *activeDevices, int numberOfDevices)
+{
+    int random;
+    srand(time(NULL));
 
     random = rand() % (numberOfDevices);
     activeDevices[random].state = 0;
     printf("%s turned off.\n", activeDevices[random].name);
-}
+}   
 
 int main (void)
 {
@@ -144,6 +150,8 @@ int main (void)
     {
         if(!runAlready && (int) time(NULL) % 2 == 1)
         {
+        	/* update all states */
+        	load_current_state (activeDevices, numberOfDevices);
             ftime = fopen ("time.txt","w");
             fprintf (ftime, "%d\n", min);
             fclose (ftime);
@@ -151,7 +159,10 @@ int main (void)
             runAlready = 1;
             min += 60;
 
-            enable_random (activeDevices, numberOfDevices);
+            /* This is a demonstration */
+            if(min == 180)
+                activeDevices[0].state = 1;
+
 
             write_current_state (activeDevices, numberOfDevices);
 

@@ -1,14 +1,4 @@
-en
+switch_1
 0
-kon
+led_1
 1
-q
-2
-w
-3
-e
-4
-r
-5
-t
-6

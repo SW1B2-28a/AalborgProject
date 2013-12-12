@@ -45,6 +45,11 @@ typedef struct {
         state;
 } device;
 
+void print_line_seperator (void)
+{
+    printf("\n---------------------\n");
+}
+
 int load_rules (FILE *rules, rule *activeRules)
 {
     char ch;    /* Char to check if the next char is EOF    */
@@ -155,7 +160,7 @@ void print_single_rule (rule *activeRules, int ruleNumber)
         printf("%d ", activeRules[ruleNumber].reactantsDisable[i]);
     }
     
-    printf("\n\n");
+    printf("\n");
 }
 
 void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
@@ -340,7 +345,7 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
         printf("Enter the number of the rule which is to be edited: (-1 to quit)\n");
         for (i = 0; i < numberOfRules; i++)
         {
-            printf("%d: %s\n", i, activeRules[i].name);
+            printf("    '%d': %s\n", i, activeRules[i].name);
         }
         printf(">");
         scanf("%d", &ruleNumber);
@@ -354,23 +359,23 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
 
     } while (ruleNumber >= numberOfRules || ruleNumber < - 1);
 
-    printf("\n---------------------\n");
+    print_line_seperator();
     print_single_rule (activeRules, ruleNumber);
-    printf("---------------------\n");
+    print_line_seperator();
 
     /* Prompt user for which action to take: */
     printf("Please select an action:\n"
-           "1: Go Back to main menu.\n"
-           "2: Go one step back and select a different rule.\n"
-           "3: Edit rule name.\n"
-           "4: Set time activation settings.\n"
-           "5: Set device activation devices.\n"
-           "6: Set which devices will be enabled.\n"
-           "7: Set which devices will be disabled.\n"
+           "    '1': Go Back to main menu.\n"
+           "    '2': Go one step back and select a different rule.\n"
+           "    '3': Edit rule name.\n"
+           "    '4': Set time activation settings.\n"
+           "    '5': Set device activation devices.\n"
+           "    '6': Set which devices will be enabled.\n"
+           "    '7': Set which devices will be disabled.\n"
            ">");
 
     scanf("%d", (int *) &option);
-    printf("---------------------\n");
+    print_line_seperator();
     switch (option)
     {
         case 1: 
@@ -395,7 +400,6 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
             break;
         default: printf("Invalid option. (%d)\n", option); break;
     }
-
 }
 
 int add_rule (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices) 
@@ -412,15 +416,15 @@ int add_rule (rule *activeRules, int numberOfRules, device *activeDevices, int n
         activeRules[numberOfRules].reactantsEnable[i] = -1;
         activeRules[numberOfRules].reactantsDisable[i] = -1;
     }
-    printf("---------------------\n");
+    print_line_seperator();
     edit_time_settings (activeRules, numberOfRules);
-    printf("---------------------\n");
+    print_line_seperator();
     edit_actived_by (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
-    printf("---------------------\n");
+    print_line_seperator();
     edit_activates (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
-    printf("---------------------\n");            
+    print_line_seperator();            
     edit_deactivates (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
-    printf("---------------------\n");
+    print_line_seperator();
 
     return numberOfRules + 1;
 }
@@ -436,7 +440,7 @@ int delete_rule (rule *activeRules, int numberOfRules)
         }
         printf(">");
         scanf("%d", &ruleNumber);
-        if (ruleNumber > numberOfRules - 1 || ruleNumber < - 1)
+        if (ruleNumber >= numberOfRules || ruleNumber < - 1)
         {
             printf("Rule not found\n");
         } else if ( ruleNumber == - 1) 
@@ -444,12 +448,12 @@ int delete_rule (rule *activeRules, int numberOfRules)
             return numberOfRules;
         }
 
-    } while (ruleNumber > numberOfRules - 1 || ruleNumber < - 1);
+    } while (ruleNumber >= numberOfRules || ruleNumber < - 1);
 
     /* 
-     * Deletion of a single array element is the biggest disadvantage of arrays ... 
-     * Replaces the current element of each in the struct of the next.
-     * Looped to the end of the array.
+     * Deletion of a single array element.
+     * Moves the elements of the next til the one deleted.
+     * Repeat for the rest of the array.
      */
 
     for ( i = ruleNumber; i < numberOfRules - 1; i++ )
@@ -589,7 +593,6 @@ int delete_device (device *activeDevices, int numberOfDevices)
     return numberOfDevices - 1;
 }
 
-/* Rename io */
 void save_files (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
     /* Open files in write mode and write all rules and devices*/
@@ -879,7 +882,7 @@ int main(int argc, char const *argv[])
                 save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
                 exit(1);
             }
-            printf("---------------------\n");
+            print_line_seperator();
             switch (option)
             {
                 case -1: printf ("Bye\n"); break;
@@ -893,7 +896,7 @@ int main(int argc, char const *argv[])
                 case 8: automation_init (activeRules, numberOfRules, activeDevices, numberOfDevices); break;
                 default: printf("Invalid option try again.\n"); break;
             }
-            printf("---------------------\n");
+            print_line_seperator();
         } while (option != -1);
 
     }

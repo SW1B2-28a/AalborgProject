@@ -201,9 +201,11 @@ void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, 
     cnt = 0;
     while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
     {
-        if(tmp == -1)
-            break;
         activeRules[ruleNumber].dependencies[cnt] = tmp;
+        if(tmp == -1)
+        {
+            break;
+        }
         cnt++;
         printf(">");
     }
@@ -253,9 +255,9 @@ void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, i
     cnt = 0;
     while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
     {
+        activeRules[ruleNumber].reactantsEnable[cnt] = tmp;
         if(tmp == -1)
             break;
-        activeRules[ruleNumber].reactantsEnable[cnt] = tmp;
         cnt++;
         printf(">");
     }
@@ -305,9 +307,9 @@ void edit_deactivates (rule *activeRules, int ruleNumber, device *activeDevices,
     cnt = 0;
     while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
     {
+        activeRules[ruleNumber].reactantsDisable[cnt] = tmp;
         if(tmp == -1)
             break;
-        activeRules[ruleNumber].reactantsDisable[cnt] = tmp;
         cnt++;
         printf(">");
     }

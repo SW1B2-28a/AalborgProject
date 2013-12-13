@@ -172,7 +172,7 @@ void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, 
         {
             /* This gets the id of the device, not the position in array*/
             tmp = activeRules[ruleNumber].dependencies[i];
-            for (j = 0; j < numberOfRules; j++)
+            for (j = 0; j < numberOfDevices; j++)
             {
                 if (activeDevices[j].id == tmp)
                 {
@@ -224,7 +224,7 @@ void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, i
         {
             /* This gets the id of the device, not the position in array*/
             tmp = activeRules[ruleNumber].reactantsEnable[i];
-            for (j = 0; j < numberOfRules; j++)
+            for (j = 0; j < numberOfDevices; j++)
             {
                 if (activeDevices[j].id == tmp)
                 {
@@ -276,7 +276,7 @@ void edit_deactivates (rule *activeRules, int ruleNumber, device *activeDevices,
         {
             /* This gets the id of the device, not the position in array*/
             tmp = activeRules[ruleNumber].reactantsDisable[i];
-            for (j = 0; j < numberOfRules; j++)
+            for (j = 0; j < numberOfDevices; j++)
             {
                 if (activeDevices[j].id == tmp)
                 {

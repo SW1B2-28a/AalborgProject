@@ -74,7 +74,7 @@ void load_current_state (device *activeDevices, int numberOfDevices)
         }
         fscanf (tmp, "%d", &activeDevices[i].state);
         fclose (tmp);
-        printf("%s state is %d\n", activeDevices[i].name, activeDevices[i].state);
+        printf("%-30s state is \t%d\n", activeDevices[i].name, activeDevices[i].state);
     }
 }
 
@@ -112,12 +112,27 @@ void disable_random (device *activeDevices, int numberOfDevices)
     printf("%s turned off.\n", activeDevices[random].name);
 }   
 
+int time_to_min (int t1, int t2)
+{
+    return t1 * 60 + t2;
+}
+
+int within_interval (int currentTime, int min2, int interval)
+{
+    if((currentTime / interval) * interval < min2)
+        if((1 + currentTime / interval) * interval > min2)
+            return 1;
+
+    return 0;
+}
+
 int main (void)
 {
     int min = 0,
         runAlready = 0,
         ready = 0,
-        numberOfDevices;
+        numberOfDevices,
+        interval = 60;
 
     FILE * ftime;
     FILE * start;
@@ -155,14 +170,28 @@ int main (void)
             ftime = fopen ("time.txt","w");
             fprintf (ftime, "%d\n", min);
             fclose (ftime);
-            printf("Time: %02d:%02d (%d) adding 60 minutes!\n", min / 60, min % 60, min);
+            printf("Time: %02d:%02d (%d) adding %d minutes!\n", min / 60, min % 60, min, interval);
             runAlready = 1;
-            min += 60;
+            min += interval;
 
             /* This is a demonstration */
-            if(min == 180)
-                activeDevices[0].state = 1;
+            if(within_interval(min, time_to_min(07,20), interval))
+                activeDevices[6].state = 1;
 
+            if(within_interval(min, time_to_min(07,30), interval))
+                activeDevices[6].state = 0;
+
+            if(within_interval(min, time_to_min(07,30), interval))
+                activeDevices[6].state = 0;
+
+            if(within_interval(min, time_to_min(07,50), interval))
+                activeDevices[9].state = 1;
+
+            if(within_interval(min, time_to_min(16,20), interval))
+                activeDevices[4].state = 1;
+
+            if(within_interval(min, time_to_min(20,50), interval))
+                activeDevices[4].state = 0;
 
             write_current_state (activeDevices, numberOfDevices);
 

@@ -513,9 +513,7 @@ void print_single_device (device *activeDevices, int deviceNumber)
 {
     printf("Name:\t%s\n", activeDevices[deviceNumber].name);
 
-    printf("Id:\t%d\n", activeDevices[deviceNumber].id);
-
-    printf("State:\t%d\n\n", activeDevices[deviceNumber].state);
+    printf("Id:\t%d\n\n", activeDevices[deviceNumber].id);
 }
 
 int add_device (device *activeDevices, int numberOfDevices) 
@@ -585,9 +583,9 @@ int delete_device (device *activeDevices, int numberOfDevices)
 
     } while (option < 0);
 
-    for ( i = option; i < numberOfDevices - 1; i++ )
+    for ( i = option; i < numberOfDevices; i++ )
     {
-        strcpy (activeDevices[i].name, activeDevices[i].name);
+        strcpy (activeDevices[i].name, activeDevices[i + 1].name);
         activeDevices[i].state = activeDevices[i + 1].state;
         activeDevices[i].id = activeDevices[i + 1].id;
     }
@@ -651,7 +649,7 @@ void load_current_state (device *activeDevices, int numberOfDevices)
         }
         fscanf (tmp, "%d", &activeDevices[i].state);
         fclose (tmp);
-        printf("%s state is %d\n", activeDevices[i].name, activeDevices[i].state);
+        printf("%-30s state is \t%d\n", activeDevices[i].name, activeDevices[i].state);
     }
 }
 
@@ -667,6 +665,7 @@ void write_current_state (device *activeDevices, int numberOfDevices)
         fprintf (tmp, "%d\n", activeDevices[i].state);
         fclose (tmp);
     }
+    printf("<------------------------------------\n");
 }
 
 void trigger_rule (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices)

@@ -583,7 +583,7 @@ int delete_device (device *activeDevices, int numberOfDevices)
 
     } while (option < 0);
 
-    for ( i = option; i < numberOfDevices - 1; i++ )
+    for ( i = option; i < numberOfDevices; i++ )
     {
         strcpy (activeDevices[i].name, activeDevices[i + 1].name);
         activeDevices[i].state = activeDevices[i + 1].state;

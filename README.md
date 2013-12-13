@@ -10,5 +10,6 @@ SW1B2-28a
 * Run main and sim in seperate consoles.
 * The simulation will start when both programs are ready.
  (main can be used with argument "-d" to bypass the menu.)
-* Currently the program turns on and off a random device each tick.
+* Currently the program turns on device 0 at 03:00.
+* There is a rule which triggers at that point.
 * A tick adds 60 mins to the timer.

@@ -845,13 +845,12 @@ void check_rule_part_for_missing_devices (int *devicesInRule, rule *activeRules,
                 if (devicesInRule[i] == activeDevices[j].id)
                 {
                     devicesMatched++;
-                    break;
                 }
             }
         }
 
     }
-    if (devicesMatched != DEVICES_PR_RULE - 1)
+    if (devicesMatched != DEVICES_PR_RULE)
         printf("Warning: Rule '%s' uses a device which doesn't exist. \n", 
                 activeRules[ruleNumber].name);
 }
@@ -863,7 +862,11 @@ void check_all_rules_for_missing_devices (rule *activeRules, device *activeDevic
     for (i = 0; i < numberOfRules; i++)
     {
         check_rule_part_for_missing_devices (activeRules[i].dependencies, activeRules, activeDevices, numberOfDevices, i);
+        check_rule_part_for_missing_devices (activeRules[i].reactantsEnable, activeRules, activeDevices, numberOfDevices, i);
+        check_rule_part_for_missing_devices (activeRules[i].reactantsDisable, activeRules, activeDevices, numberOfDevices, i);
+    
     }
+
 }
 
 int main(int argc, char const *argv[])
@@ -913,9 +916,6 @@ int main(int argc, char const *argv[])
     numberOfRules = load_rules (rulesIn, activeRules);
     fclose (rulesIn);
 
-    /* Check if all rules are valid */
-    check_all_rules_for_missing_devices (activeRules, activeDevices, numberOfDevices, numberOfRules);
-
     /* Load existing devices from file */
     numberOfDevices = load_devices (devicesIn, activeDevices);
     fclose (devicesIn);
@@ -931,6 +931,8 @@ int main(int argc, char const *argv[])
         /* Print menu */
         int option = 0; 
         do {
+            /* Check if all rules are valid */
+            check_all_rules_for_missing_devices (activeRules, activeDevices, numberOfDevices, numberOfRules);
             printf("Please choose an option.\n"
                    "  '-1' Quit\n"
                    "  '1' Print list of rules [%d]\n"
@@ -963,8 +965,6 @@ int main(int argc, char const *argv[])
                 default: printf("Invalid option try again.\n"); break;
             }
             print_line_seperator();
-            /* Check if all rules are valid */
-            check_all_rules_for_missing_devices (activeRules, activeDevices, numberOfDevices, numberOfRules);
         } while (option != -1);
 
     }

@@ -128,6 +128,9 @@ int time_to_min (int t1, int t2)
 
 void wait_for_start_file (void)
 {
+    int ready;
+    FILE * start;
+    struct timeval tempTime;
     while (!ready)
     {
         gettimeofday(&tempTime, 0);
@@ -145,14 +148,12 @@ int main (void)
 {
     int min = 0,
         runAlready = 0,
-        ready = 0,
         numberOfDevices,
         interval = 60;
 
     struct timeval tempTime;
 
     FILE * ftime;
-    FILE * start;
     FILE * devicesIn;
 
     device *activeDevices;

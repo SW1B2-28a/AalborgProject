@@ -131,9 +131,9 @@ void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices
     printf("Rule number %d\n", ruleNumber);
     printf("Name:\t\t%s\n", activeRules[ruleNumber].name);
 
-    printf("Active:\t\t%d\n", activeRules[ruleNumber].active);
+    printf("Active:\t\t%s\n", activeRules[ruleNumber].active ? "Yes" : "No");
 
-    printf("Timer based:\t%d\n", activeRules[ruleNumber].timerBased);
+    printf("Timer based:\t%s\n", activeRules[ruleNumber].timerBased ? "Yes" : "No");
     if (activeRules[ruleNumber].timerBased == 1) 
     {
         printf("Active at time:\t%02d:%02d\n", 
@@ -829,6 +829,43 @@ void automation_init (rule *activeRules, int numberOfRules, device *activeDevice
     automation_loop (activeRules, numberOfRules, activeDevices, numberOfDevices);
 }
 
+void check_rule_part_for_missing_devices (int *devicesInRule, rule *activeRules, device *activeDevices, 
+                                          int numberOfDevices, int ruleNumber)
+{
+    int i, j, devicesMatched = 0;
+    /* Check if all the devices used in rules exist */
+    for (i = 0; i < DEVICES_PR_RULE; i++)
+    {
+        if (devicesInRule[i] == -1)
+        {
+            devicesMatched++;
+        } else {
+            for (j = 0; j < numberOfDevices; j++)
+            {
+                if (devicesInRule[i] == activeDevices[j].id)
+                {
+                    devicesMatched++;
+                    break;
+                }
+            }
+        }
+
+    }
+    if (devicesMatched != DEVICES_PR_RULE - 1)
+        printf("Warning: Rule '%s' uses a device which doesn't exist. \n", 
+                activeRules[ruleNumber].name);
+}
+
+void check_all_rules_for_missing_devices (rule *activeRules, device *activeDevices, 
+                                          int numberOfDevices, int numberOfRules)
+{
+    int i;
+    for (i = 0; i < numberOfRules; i++)
+    {
+        check_rule_part_for_missing_devices (activeRules[i].dependencies, activeRules, activeDevices, numberOfDevices, i);
+    }
+}
+
 int main(int argc, char const *argv[])
 {
     /* Initialize variables */
@@ -875,6 +912,9 @@ int main(int argc, char const *argv[])
     /* Load existing rules from file */
     numberOfRules = load_rules (rulesIn, activeRules);
     fclose (rulesIn);
+
+    /* Check if all rules are valid */
+    check_all_rules_for_missing_devices (activeRules, activeDevices, numberOfDevices, numberOfRules);
 
     /* Load existing devices from file */
     numberOfDevices = load_devices (devicesIn, activeDevices);
@@ -923,6 +963,8 @@ int main(int argc, char const *argv[])
                 default: printf("Invalid option try again.\n"); break;
             }
             print_line_seperator();
+            /* Check if all rules are valid */
+            check_all_rules_for_missing_devices (activeRules, activeDevices, numberOfDevices, numberOfRules);
         } while (option != -1);
 
     }

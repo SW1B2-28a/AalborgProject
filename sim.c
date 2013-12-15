@@ -112,11 +112,6 @@ void disable_random (device *activeDevices, int numberOfDevices)
     printf("%s turned off.\n", activeDevices[random].name);
 }   
 
-int time_to_min (int t1, int t2)
-{
-    return t1 * 60 + t2;
-}
-
 int within_interval (int currentTime, int min2, int interval)
 {
     if((currentTime / interval) * interval < min2)
@@ -124,6 +119,26 @@ int within_interval (int currentTime, int min2, int interval)
             return 1;
 
     return 0;
+}
+
+int time_to_min (int t1, int t2)
+{
+    return t1 * 60 + t2;
+}
+
+void wait_for_start_file (void)
+{
+    while (!ready)
+    {
+        gettimeofday(&tempTime, 0);
+        if((int) tempTime.tv_sec % 2 == 1)
+        {
+            start = fopen ("start", "r");
+            if (start != NULL)
+               ready = 1;
+        }
+        Sleep(1000);
+    }
 }
 
 int main (void)
@@ -145,18 +160,7 @@ int main (void)
     printf("Waiting for main to start simulation.\n");
 
     /* Wait for main to be ready */
-    while (!ready)
-    {
-        gettimeofday(&tempTime, 0);
-        if((int) tempTime.tv_sec % 2 == 1)
-        {
-            start = fopen ("start", "r");
-            if (start != NULL)
-               ready = 1;
-        }
-
-        Sleep(1000);
-    }
+    wait_for_start_file();
 
     activeDevices = (device *) calloc (MAX_DEVICES, sizeof(device));
     devicesIn = fopen ("devices_test.txt", "r");

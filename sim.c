@@ -134,6 +134,8 @@ int main (void)
         numberOfDevices,
         interval = 60;
 
+    struct timeval tempTime;
+
     FILE * ftime;
     FILE * start;
     FILE * devicesIn;
@@ -145,7 +147,8 @@ int main (void)
     /* Wait for main to be ready */
     while (!ready)
     {
-        if((int) time(NULL) % 2 == 1)
+        gettimeofday(&tempTime, 0);
+        if((int) tempTime.tv_sec % 2 == 1)
         {
             start = fopen ("start", "r");
             if (start != NULL)
@@ -163,7 +166,8 @@ int main (void)
     
     while (min < 1450)
     {
-        if(!runAlready && (int) time(NULL) % 2 == 1)
+        gettimeofday(&tempTime, 0);
+        if(!runAlready && (int) tempTime.tv_sec % 2 == 1)
         {
         	/* update all states */
         	load_current_state (activeDevices, numberOfDevices);
@@ -197,7 +201,7 @@ int main (void)
 
         }
 
-        if((int) time(NULL) % 2 == 0)
+        if((int) tempTime.tv_sec % 2 == 0)
         {
             runAlready = 0;
         }

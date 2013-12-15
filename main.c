@@ -125,9 +125,9 @@ void write_rules (FILE *rules, rule *activeRules, int numberOfRules)
     }
 }
 
-void print_single_rule (rule *activeRules, int ruleNumber) 
+void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices) 
 {
-    int i;
+    int i, cnt = 0;
     printf("Rule number %d\n", ruleNumber);
     printf("Name:\t\t%s\n", activeRules[ruleNumber].name);
 
@@ -140,26 +140,49 @@ void print_single_rule (rule *activeRules, int ruleNumber)
                 activeRules[ruleNumber].min / 60, activeRules[ruleNumber].min % 60);
     }
 
-    printf("Depends on devices:\n");        
+    printf("Depends on devices:\n");
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
-        printf("%d ", activeRules[ruleNumber].dependencies[i]);
+        if(activeRules[ruleNumber].dependencies[i] != -1)
+            printf("    %d: %s\n", activeRules[ruleNumber].dependencies[i], 
+                activeDevices[activeRules[ruleNumber].dependencies[i]].name);
+        else
+            cnt++;
     }
-    
-    printf("\nAffects devices (Enables):\n");
 
+    if(cnt == 10)
+        printf("    None\n");
+
+    cnt = 0;
+
+    printf("Affects devices (Enables):\n");
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
-        printf("%d ", activeRules[ruleNumber].reactantsEnable[i]);
+        if(activeRules[ruleNumber].reactantsEnable[i] != -1)
+            printf("    %d: %s\n", activeRules[ruleNumber].reactantsEnable[i], 
+                activeDevices[(activeRules[ruleNumber].reactantsEnable[i])].name);
+        else
+            cnt++;
     }
 
-    printf("\nAffects devices (Disables):\n");
+    if(cnt == 10)
+        printf("    None\n");
 
+    cnt = 0;
+
+    printf("Affects devices (Disables):\n");
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
-        printf("%d ", activeRules[ruleNumber].reactantsDisable[i]);
+        if(activeRules[ruleNumber].reactantsDisable[i] != -1)
+            printf("    %d: %s\n", activeRules[ruleNumber].reactantsDisable[i], 
+                activeDevices[(activeRules[ruleNumber].reactantsDisable[i])].name);
+        else
+            cnt++;
     }
-    
+
+    if(cnt == 10)
+        printf("    None\n");
+
     printf("\n");
 }
 
@@ -321,7 +344,7 @@ void edit_deactivates (rule *activeRules, int ruleNumber, device *activeDevices,
     printf("Rule saved.\n");
 }
 
-void edit_time_settings (rule *activeRules, int ruleNumber)
+void edit_time_settings (rule *activeRules, int ruleNumber, device *activeDevices)
 {
     printf("Currently time activation is %sabled (At time %02d:%02d)\n"
            "Enter 1 if you want it enabled or 0 if not.\n"
@@ -362,7 +385,7 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
     } while (ruleNumber >= numberOfRules || ruleNumber < - 1);
 
     print_line_seperator();
-    print_single_rule (activeRules, ruleNumber);
+    print_single_rule (activeRules, ruleNumber, activeDevices);
     print_line_seperator();
 
     /* Prompt user for which action to take: */
@@ -389,7 +412,7 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
             scanf("%s", activeRules[ruleNumber].name);
             break;
         case 4:
-            edit_time_settings (activeRules, ruleNumber);
+            edit_time_settings (activeRules, ruleNumber, activeDevices);
             break;
         case 5:
             edit_actived_by (activeRules, ruleNumber, activeDevices, numberOfDevices, numberOfRules);
@@ -419,7 +442,7 @@ int add_rule (rule *activeRules, int numberOfRules, device *activeDevices, int n
         activeRules[numberOfRules].reactantsDisable[i] = -1;
     }
     print_line_seperator();
-    edit_time_settings (activeRules, numberOfRules);
+    edit_time_settings (activeRules, numberOfRules, activeDevices);
     print_line_seperator();
     edit_actived_by (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
     print_line_seperator();
@@ -433,7 +456,7 @@ int add_rule (rule *activeRules, int numberOfRules, device *activeDevices, int n
 
 int delete_rule (rule *activeRules, int numberOfRules)
 {
-    int ruleNumber, i, j;;
+    int ruleNumber, i;
     do {
         printf("Enter the number of the rule which is to be deleted: (-1 to quit)\n");
         for (i = 0; i < numberOfRules; i++)
@@ -457,20 +480,9 @@ int delete_rule (rule *activeRules, int numberOfRules)
      * Moves the elements of the next til the one deleted.
      * Repeat for the rest of the array.
      */
-
     for ( i = ruleNumber; i < numberOfRules - 1; i++ )
     {
-        strcpy (activeRules[i].name, activeRules[i + 1].name);
-        activeRules[i].active = activeRules[i + 1].active;
-        activeRules[i].timerBased = activeRules[i + 1].timerBased;
-        activeRules[i].min = activeRules[i + 1].min;
-
-        for (j = 0; j < DEVICES_PR_RULE; j++)
-        {
-            activeRules[i].dependencies[j] = activeRules[i + 1].dependencies[j];
-            activeRules[i].reactantsEnable[j] = activeRules[i + 1].reactantsEnable[j];
-            activeRules[i].reactantsDisable[j] = activeRules[i + 1].reactantsDisable[j];
-        }
+        activeRules[i] = activeRules[i + 1];
     }
 
     return numberOfRules - 1;
@@ -613,11 +625,15 @@ int get_current_time_in_minutes (void)
 {
     int min, ready = 0;
 
+    /* Using <sys/time.h> to get time */
+    struct timeval tempTime;
+
     FILE * ftime;
 
     while (!ready)
     {
-        if((int) time(NULL) % 2 == 0)
+        gettimeofday(&tempTime, 0);
+        if((int) tempTime.tv_sec % 2 == 0)
         {
             ftime = fopen ("time.txt", "r");
             if (ftime != NULL)
@@ -696,6 +712,10 @@ int check_rule_by_state (rule *aR, int rN, device *aD, int NoD)
         j,
         depAchived = 0;     /* All depencenes must be accounted for */
 
+    /* Return 0 if the rule is based on time not state */
+    if(aR[rN].timerBased == 1)
+        return 0;
+
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
         if (aR[rN].dependencies[i] == -1)
@@ -729,10 +749,14 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
         runAlready = 0,
         cnt = 0;
 
+        /* Using <sys/time.h> to get time */
+    struct timeval tempTime;
+
     while(min1 < 1440)
     {   
+        gettimeofday(&tempTime, 0);
         /* If a check haven't occurred and the time is equal check */
-        if(!runAlready && (int) time(NULL) % 2 == 0)
+        if(!runAlready && (int) tempTime.tv_sec % 2 == 0)
         {
 
             printf("Checking ... %02d:%02d\n", min1 / 60, min1 % 60);
@@ -772,7 +796,7 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
         }
 
         /* If time is odd, set the check variable to 0 */
-        if ((int) time(NULL) % 2 == 1) {
+        if ((int) tempTime.tv_sec % 2 == 1) {
             runAlready = 0;
         }
 
@@ -785,12 +809,14 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
 void automation_init (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
     FILE * start;
-    time_t time_start;
+    /* Using <sys/time.h> to get time */
+    struct timeval tempTime;
     
     printf("Saving all rules [%d] and devices [%d]\n", numberOfRules, numberOfDevices);
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
-    time(&time_start);
-    printf("Automation started at: %s\n", ctime (&time_start));
+    gettimeofday(&tempTime, 0);
+    time_t currentTime = tempTime.tv_sec;
+    printf("Automation started at: %s\n", ctime (&currentTime));
 
     /* Create io files */
     write_current_state (activeDevices, numberOfDevices);
@@ -886,7 +912,7 @@ int main(int argc, char const *argv[])
             switch (option)
             {
                 case -1: printf ("Bye\n"); break;
-                case 1: for (i = 0; i < numberOfRules; i++) {print_single_rule(activeRules, i);} break;
+                case 1: for (i = 0; i < numberOfRules; i++) {print_single_rule(activeRules, i, activeDevices);} break;
                 case 2: for (i = 0; i < numberOfDevices; i++) {print_single_device(activeDevices, i);} break;
                 case 3: numberOfRules = add_rule (activeRules, numberOfRules, activeDevices, numberOfDevices); break;
                 case 4: numberOfDevices = add_device (activeDevices, numberOfDevices); break;

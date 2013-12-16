@@ -256,7 +256,6 @@ void edit_activated_by (rule *activeRules, int ruleNumber, device *activeDevices
                     activeDevices, numberOfDevices, devicesInRule);
     promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
                     numberOfRules, cnt, "is activated by", activeRules[ruleNumber].dependencies);
-
 }
 
 void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
@@ -295,27 +294,36 @@ void edit_time_settings (rule *activeRules, int ruleNumber, device *activeDevice
     }
 }
 
-void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
+int select_rule_to_edit (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
-    int ruleNumber, option, i;
+    int i, ruleNumber;
+
     do {
-        printf("Enter the number of the rule which is to be edited: (-1 to quit)\n");
-        for (i = 0; i < numberOfRules; i++)
-        {
-            printf("    '%d': %s\n", i, activeRules[i].name);
-        }
-        printf(">");
-        scanf("%d", &ruleNumber);
-        if (ruleNumber >= numberOfRules || ruleNumber < - 1)
-        {
-            printf("Rule not found\n");
-        }  else if ( ruleNumber == - 1) {
-            /* void function return with no value to exit */
-            return;
-        }
+    printf("Enter the number of the rule which is to be edited: (-1 to quit)\n");
+    for (i = 0; i < numberOfRules; i++)
+    {
+        printf("    '%d': %s\n", i, activeRules[i].name);
+    }
+    printf(">");
+    scanf("%d", &ruleNumber);
+    if (ruleNumber >= numberOfRules || ruleNumber < - 1)
+    {
+        printf("Rule not found\n");
+    }  else if ( ruleNumber == - 1) {
+        /* void function return with no value to exit */
+        return -1;
+    }
 
     } while (ruleNumber >= numberOfRules || ruleNumber < - 1);
 
+    return ruleNumber;
+}
+
+void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
+{
+    int ruleNumber, option;
+
+    ruleNumber = select_rule_to_edit (activeRules, numberOfRules, activeDevices, numberOfDevices);
     print_line_seperator();
     print_single_rule (activeRules, ruleNumber, activeDevices);
     print_line_seperator();
@@ -343,10 +351,10 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
             printf("Enter a new name (Currently '%s'):\n>", activeRules[ruleNumber].name);
             scanf("%s", activeRules[ruleNumber].name);
             break;
-        case 4:
-            edit_time_settings (activeRules, ruleNumber, activeDevices);
+        case 4: 
+            edit_time_settings (activeRules, ruleNumber, activeDevices); 
             break;
-        case 5:
+        case 5: 
             edit_activated_by (activeRules, ruleNumber, activeDevices, numberOfDevices, numberOfRules);
             break;
         case 6:

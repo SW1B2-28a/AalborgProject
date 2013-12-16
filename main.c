@@ -919,7 +919,11 @@ int main(int argc, char const *argv[])
     {
         sprintf(filename, "%d", activeDevices[i].id);
         remove(filename);
-    } 
+    }
+    
+    /* Free memory */
+    free(activeDevices);
+    free(activeRules);
 
     return 0;
 }

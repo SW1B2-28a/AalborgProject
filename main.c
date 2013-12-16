@@ -5,7 +5,6 @@
  *
  * This is the main part of the program.
  *
- * Outline for file formats located in the end of this file.
  * Variables i and j are used as counters in loops etc.
  */
 
@@ -916,36 +915,3 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-
-/* Outline for rules file format (1): 
-
-AUTO_TURN_ON_LIGHT
-1
-1
-480
-22  32  -1  -1  -1  -1  -1  -1  -1  -1
-45  -1  -1  -1  -1  -1  -1  -1  -1  -1 
-
-*/
-
-/* Outline for device file format (2): 
-
-TEST_LAMPE_ENTRANCE
-22
-
-*/
-
-
-/* Outline for time file format (3):
-
-TIMESTAMP (IN MINUTES)
-
-IE. 360 (== 06:00)
-
-*/
-
-/* Outline for io file format (4):
-
-Filename is name of device, contents is state (0 or 1). 
-
-*/

@@ -749,13 +749,13 @@ void automation_loop (rule *activeRules, int numberOfRules, device *activeDevice
 void automation_init (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)
 {
     FILE * start;
-    /* Using <sys/time.h> to get time */
-    struct timeval tempTime;
+    struct timeval tempTime;    /* Using <sys/time.h> to get time */
+    time_t currentTime;
     
     printf("Saving all rules [%d] and devices [%d]\n", numberOfRules, numberOfDevices);
     save_files (activeRules, numberOfRules, activeDevices, numberOfDevices);
     gettimeofday(&tempTime, 0);
-    time_t currentTime = tempTime.tv_sec;
+    currentTime = tempTime.tv_sec;
     printf("Automation started at: %s\n", ctime (&currentTime));
 
     /* Create io files */
@@ -920,7 +920,7 @@ int main(int argc, char const *argv[])
         sprintf(filename, "%d", activeDevices[i].id);
         remove(filename);
     }
-    
+
     /* Free memory */
     free(activeDevices);
     free(activeRules);

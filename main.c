@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 
 #define MAX_RULES           100
 #define MAX_DEVICES         100
@@ -186,18 +187,17 @@ void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices
     printf("\n");
 }
 
-void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
+int find_devices_in_rule (int *rulesPart, device *activeDevices, int ruleNumber, int numberOfDevices, int *devicesInRule)
 {
-    int tmp, cnt = 0, i, j, devicesInRule[MAX_DEVICES];
+    int i, j, cnt = 0;
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
-        if (activeRules[ruleNumber].dependencies[i] != -1)
+        if (rulesPart[i] != -1)
         {
             /* This gets the id of the device, not the position in array*/
-            tmp = activeRules[ruleNumber].dependencies[i];
             for (j = 0; j < numberOfDevices; j++)
             {
-                if (activeDevices[j].id == tmp)
+                if (activeDevices[j].id == rulesPart[i])
                 {
                     devicesInRule[cnt] = j;
                     cnt++;
@@ -205,6 +205,14 @@ void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, 
             }
         }
     }
+
+    return cnt;
+}
+
+void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
+{
+    int tmp, cnt = 0, i, devicesInRule[MAX_DEVICES];
+    cnt = find_devices_in_rule (activeRules[ruleNumber].dependencies, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
 
     printf("This rule is actived by %d device%s.\n", cnt, cnt > 1 ? "s" : "");
     if (cnt > 0)
@@ -242,23 +250,8 @@ void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, 
 
 void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
 {
-    int tmp, cnt = 0, i, j, devicesInRule[MAX_DEVICES];
-    for (i = 0; i < DEVICES_PR_RULE; i++)
-    {
-        if (activeRules[ruleNumber].reactantsEnable[i] != -1)
-        {
-            /* This gets the id of the device, not the position in array*/
-            tmp = activeRules[ruleNumber].reactantsEnable[i];
-            for (j = 0; j < numberOfDevices; j++)
-            {
-                if (activeDevices[j].id == tmp)
-                {
-                    devicesInRule[cnt] = j;
-                    cnt++;
-                }
-            }
-        }
-    }
+    int tmp, cnt = 0, i, devicesInRule[MAX_DEVICES];
+    cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsEnable, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
 
     printf("This rule actives %d device%s.\n", cnt, cnt > 1 ? "s" : "");
     if (cnt > 0)
@@ -294,31 +287,16 @@ void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, i
 
 void edit_deactivates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
 {
-    int tmp, cnt = 0, i, j, devicesInRule[MAX_DEVICES];
-    for (i = 0; i < DEVICES_PR_RULE; i++)
-    {
-        if (activeRules[ruleNumber].reactantsDisable[i] != -1)
-        {
-            /* This gets the id of the device, not the position in array*/
-            tmp = activeRules[ruleNumber].reactantsDisable[i];
-            for (j = 0; j < numberOfDevices; j++)
-            {
-                if (activeDevices[j].id == tmp)
-                {
-                    devicesInRule[cnt] = j;
-                    cnt++;
-                }
-            }
-        }
-    }
-
+    int tmp, cnt = 0, i, devicesInRule[MAX_DEVICES];
+    cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsDisable, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
+    
     printf("This rule deactives %d device%s.\n", cnt, cnt > 1 ? "s" : "");
     if (cnt > 0)
     {
         printf("The devices are:\n");
         for (i = 0; i < cnt; i++)
         {
-            printf("%d: %s\n", activeDevices[devicesInRule[i]].id, activeDevices[devicesInRule[i]].name);
+            printf("%d: %s\n", activeDevices[i].id, activeDevices[i].name);
         }
     }
     printf("Avalible devices is:\n");
@@ -866,7 +844,6 @@ void check_all_rules_for_missing_devices (rule *activeRules, device *activeDevic
         check_rule_part_for_missing_devices (activeRules[i].reactantsDisable, activeRules, activeDevices, numberOfDevices, i);
     
     }
-
 }
 
 int main(int argc, char const *argv[])
@@ -924,7 +901,7 @@ int main(int argc, char const *argv[])
     printf ("Loaded %d rules, and %d devices.\n---------------------\n", numberOfRules, numberOfDevices);
 
     /* Allow to run i daemon mode, otherwise print menu */
-    if(argc > 1 && strcmp(argv[0],"-d"))
+    if(argc > 1 && strcmp(argv[1],"-d") == 0)
     {
         automation_init (activeRules, numberOfRules, activeDevices, numberOfDevices);
     } else {

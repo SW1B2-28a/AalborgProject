@@ -209,30 +209,29 @@ int find_devices_in_rule (int *rulesPart, device *activeDevices, int ruleNumber,
     return cnt;
 }
 
-void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
+void promt_edit_rule (int *dIr, rule *aR, device *aD, int nOd, int nOr, int cnt, char *type, int *rulesPart)
 {
-    int tmp, cnt = 0, i, devicesInRule[MAX_DEVICES];
-    cnt = find_devices_in_rule (activeRules[ruleNumber].dependencies, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
+    int tmp, i;
 
-    printf("This rule is actived by %d device%s.\n", cnt, cnt > 1 ? "s" : "");
+    printf("This rule %s %d device%s.\n", type, cnt, cnt > 1 || cnt == 0 ? "s" : "");
     if (cnt > 0)
     {
         printf("The device%s:\n", cnt > 1 ? "s are" : " is");
         for (i = 0; i < cnt; i++)
         {
-            printf("%d: %s\n", activeDevices[devicesInRule[i]].id, activeDevices[devicesInRule[i]].name);
+            printf("%d: %s\n", aD[dIr[i]].id, aD[dIr[i]].name);
         }
     }
     printf("Avalible devices is:\n");
-    for (i = 0; i < numberOfDevices; i++)
+    for (i = 0; i < nOr; i++)
     {
-        printf("%d %s\n", activeDevices[i].id, activeDevices[i].name);
+        printf("%d %s\n", aD[i].id, aD[i].name);
     }
     printf("Enter ALL devices (id) to be added seperated by newline (-1 to quit)\n>");
     cnt = 0;
     while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
     {
-        activeRules[ruleNumber].dependencies[cnt] = tmp;
+        rulesPart[cnt] = tmp;
         if(tmp == -1)
         {
             break;
@@ -243,83 +242,36 @@ void edit_actived_by (rule *activeRules, int ruleNumber, device *activeDevices, 
 
     for (i = cnt + 1; i < DEVICES_PR_RULE; i++)
     {
-        activeRules[ruleNumber].dependencies[i] = -1;
+        rulesPart[i] = -1;
     }
+
     printf("Rule saved.\n");
+}
+
+void edit_activated_by (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
+{
+    int cnt = 0, devicesInRule[MAX_DEVICES];
+    cnt = find_devices_in_rule (activeRules[ruleNumber].dependencies, 
+                                activeDevices, ruleNumber, numberOfDevices, devicesInRule);
+    promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
+                    numberOfRules, cnt, "is activated by", activeRules[ruleNumber].dependencies);
+
 }
 
 void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
 {
-    int tmp, cnt = 0, i, devicesInRule[MAX_DEVICES];
+    int cnt = 0, devicesInRule[MAX_DEVICES];
     cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsEnable, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
-
-    printf("This rule actives %d device%s.\n", cnt, cnt > 1 ? "s" : "");
-    if (cnt > 0)
-    {
-        printf("The devices are:\n");
-        for (i = 0; i < cnt; i++)
-        {
-            printf("%d: %s\n", activeDevices[devicesInRule[i]].id, activeDevices[devicesInRule[i]].name);
-        }
-    }
-    printf("Avalible devices is:\n");
-    for (i = 0; i < numberOfDevices; i++)
-    {
-        printf("%d %s\n", activeDevices[i].id, activeDevices[i].name);
-    }
-    printf("Enter ALL devices (id) to be added seperated by newline (-1 to quit)\n>");
-    cnt = 0;
-    while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
-    {
-        activeRules[ruleNumber].reactantsEnable[cnt] = tmp;
-        if(tmp == -1)
-            break;
-        cnt++;
-        printf(">");
-    }
-
-    for (i = cnt + 1; i < DEVICES_PR_RULE; i++)
-    {
-        activeRules[ruleNumber].reactantsEnable[i] = -1;
-    }
-    printf("Rule saved.\n");
+    promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
+                    numberOfRules, cnt, "activates", activeRules[ruleNumber].reactantsEnable);
 }
 
 void edit_deactivates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
 {
-    int tmp, cnt = 0, i, devicesInRule[MAX_DEVICES];
+    int cnt = 0, devicesInRule[MAX_DEVICES];
     cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsDisable, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
-    
-    printf("This rule deactives %d device%s.\n", cnt, cnt > 1 ? "s" : "");
-    if (cnt > 0)
-    {
-        printf("The devices are:\n");
-        for (i = 0; i < cnt; i++)
-        {
-            printf("%d: %s\n", activeDevices[i].id, activeDevices[i].name);
-        }
-    }
-    printf("Avalible devices is:\n");
-    for (i = 0; i < numberOfDevices; i++)
-    {
-        printf("%d %s\n", activeDevices[i].id, activeDevices[i].name);
-    }
-    printf("Enter ALL devices (id) to be added seperated by newline (-1 to quit)\n>");
-    cnt = 0;
-    while (scanf("%d", &tmp) == 1 && cnt < DEVICES_PR_RULE)
-    {
-        activeRules[ruleNumber].reactantsDisable[cnt] = tmp;
-        if(tmp == -1)
-            break;
-        cnt++;
-        printf(">");
-    }
-
-    for (i = cnt + 1; i < DEVICES_PR_RULE; i++)
-    {
-        activeRules[ruleNumber].reactantsDisable[i] = -1;
-    }
-    printf("Rule saved.\n");
+    promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
+                    numberOfRules, cnt, "deactives", activeRules[ruleNumber].reactantsDisable);
 }
 
 void edit_time_settings (rule *activeRules, int ruleNumber, device *activeDevices)
@@ -393,7 +345,7 @@ void edit_rule (rule *activeRules, int numberOfRules, device *activeDevices, int
             edit_time_settings (activeRules, ruleNumber, activeDevices);
             break;
         case 5:
-            edit_actived_by (activeRules, ruleNumber, activeDevices, numberOfDevices, numberOfRules);
+            edit_activated_by (activeRules, ruleNumber, activeDevices, numberOfDevices, numberOfRules);
             break;
         case 6:
             edit_activates (activeRules, ruleNumber, activeDevices, numberOfDevices, numberOfRules);            
@@ -422,7 +374,7 @@ int add_rule (rule *activeRules, int numberOfRules, device *activeDevices, int n
     print_line_seperator();
     edit_time_settings (activeRules, numberOfRules, activeDevices);
     print_line_seperator();
-    edit_actived_by (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
+    edit_activated_by (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
     print_line_seperator();
     edit_activates (activeRules, numberOfRules, activeDevices, numberOfDevices, numberOfRules);
     print_line_seperator();            

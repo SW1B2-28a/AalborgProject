@@ -187,8 +187,10 @@ void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices
     printf("\n");
 }
 
-int find_devices_in_rule (int *rulesPart, device *activeDevices, int ruleNumber, int numberOfDevices, int *devicesInRule)
+int find_devices_in_rule (int *rulesPart, device *activeDevices, int numberOfDevices, int *devicesInRule)
 {
+    /* This function findes which devices there is in a rule, 
+     * and puts it in an array, and returns the number of devices */
     int i, j, cnt = 0;
     for (i = 0; i < DEVICES_PR_RULE; i++)
     {
@@ -252,7 +254,7 @@ void edit_activated_by (rule *activeRules, int ruleNumber, device *activeDevices
 {
     int cnt = 0, devicesInRule[MAX_DEVICES];
     cnt = find_devices_in_rule (activeRules[ruleNumber].dependencies, 
-                                activeDevices, ruleNumber, numberOfDevices, devicesInRule);
+                    activeDevices, numberOfDevices, devicesInRule);
     promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
                     numberOfRules, cnt, "is activated by", activeRules[ruleNumber].dependencies);
 
@@ -261,7 +263,8 @@ void edit_activated_by (rule *activeRules, int ruleNumber, device *activeDevices
 void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
 {
     int cnt = 0, devicesInRule[MAX_DEVICES];
-    cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsEnable, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
+    cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsEnable, 
+                    activeDevices, numberOfDevices, devicesInRule);
     promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
                     numberOfRules, cnt, "activates", activeRules[ruleNumber].reactantsEnable);
 }
@@ -269,7 +272,7 @@ void edit_activates (rule *activeRules, int ruleNumber, device *activeDevices, i
 void edit_deactivates (rule *activeRules, int ruleNumber, device *activeDevices, int numberOfDevices, int numberOfRules)
 {
     int cnt = 0, devicesInRule[MAX_DEVICES];
-    cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsDisable, activeDevices, ruleNumber, numberOfDevices, devicesInRule);
+    cnt = find_devices_in_rule (activeRules[ruleNumber].reactantsDisable, activeDevices, numberOfDevices, devicesInRule);
     promt_edit_rule (devicesInRule, activeRules, activeDevices, numberOfDevices, 
                     numberOfRules, cnt, "deactives", activeRules[ruleNumber].reactantsDisable);
 }
@@ -778,8 +781,8 @@ void check_rule_part_for_missing_devices (int *devicesInRule, rule *activeRules,
                 }
             }
         }
-
     }
+
     if (devicesMatched != DEVICES_PR_RULE)
         printf("Warning: Rule '%s' uses a device which doesn't exist. \n", 
                 activeRules[ruleNumber].name);

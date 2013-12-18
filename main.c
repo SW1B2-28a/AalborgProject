@@ -150,7 +150,7 @@ void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices
             cnt++;
     }
 
-    if(cnt == 10)
+    if(cnt == DEVICES_PR_RULE)
         printf("    None\n");
 
     cnt = 0;
@@ -165,7 +165,7 @@ void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices
             cnt++;
     }
 
-    if(cnt == 10)
+    if(cnt == DEVICES_PR_RULE)
         printf("    None\n");
 
     cnt = 0;
@@ -180,7 +180,7 @@ void print_single_rule (rule *activeRules, int ruleNumber, device *activeDevices
             cnt++;
     }
 
-    if(cnt == 10)
+    if(cnt == DEVICES_PR_RULE)
         printf("    None\n");
 
     printf("\n");
@@ -672,7 +672,7 @@ int check_rule_by_state (rule *aR, int rN, device *aD, int NoD)
         }
     }
 
-    return (depAchived == 10);
+    return (depAchived == DEVICES_PR_RULE);
 }
 
 void automation_loop (rule *activeRules, int numberOfRules, device *activeDevices, int numberOfDevices)

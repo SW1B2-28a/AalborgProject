@@ -1,15 +1,19 @@
 AalborgProject
 ==============
 
-SW1B2-28a
+By SW1B2-28a
 
 ==============
 
-* Compile main by   "gcc main.c -o main" 
-* Compile sim       "gcc sim.c -o sim"
-* Run main and sim in seperate consoles.
-* The simulation will start when both programs are ready.
- (main can be used with argument "-d" to bypass the menu.)
-* Currently the program turns on device 0 at 03:00.
-* There is a rule which triggers at that point.
-* A tick adds 60 mins to the timer.
+Requirements:
+ * C-compiler (Must support ansi c)
+
+ (Tested with: gcc 4.8.1, clang 3.4-1 on Ubuntu 13.10 and gcc under MinGW on windows 7/8)
+
+==============
+
+* Compile main by   `gcc main.c -o main`
+* Compile sim       `gcc sim.c -o sim`
+* Run main and sim in seperate consoles. (main can be used with argument "-d" to bypass the menu.)
+* The simulation will start when both programs are started.
+
